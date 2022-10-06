@@ -103,9 +103,11 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
   # extract cylinder data
   cylinder <- get_as_df(data_mat$cylinder[,,1], dim = 1)
   colnames(cylinder) <- cylinder_names_new
+  cylinder <- cbind("cyl_id" = 1:nrow(cylinder), cylinder)
 
   # extract branch data
   branch <- get_as_df(data_mat$branch[,,1])
+  branch <- cbind("bra_id" = 1:nrow(branch), branch)
 
   # prepare treedata
   tree_mat <- data_mat$treedata[,,1]
@@ -205,8 +207,8 @@ updateQSM_basics <- function(qsm) {
   overview <- qsm@overview
 
   # create subsets
-  trunk_cyl  <- qsm@cylinder[qsm@cylinder$branch == 1]
-  branch_cyl <- qsm@cylinder[qsm@cylinder$branch > 1]
+  trunk_cyl  <- qsm@cylinder[qsm@cylinder$branch == 1,]
+  branch_cyl <- qsm@cylinder[qsm@cylinder$branch > 1,]
 
   # derive basic stats
   overview$TotalVolume    <- sum(pi * qsm@cylinder$length * qsm@cylinder$radius ** 2) * 1000
@@ -517,52 +519,57 @@ updateQSM_branch <- function(qsm) {
   branch <- data.table()
 
   # create subsets
-  radius <- qsm@cylinder$radius
-  length <- qsm@cylinder$length
-  axis <- cbind(qsm@cylinder$axis_X,
-                qsm@cylinder$axis_Y,
-                qsm@cylinder$axis_Z)
+  radius <- data.table("cyl_id" = qsm@cylinder$cyl_id, "radius" = qsm@cylinder$radius)
+  length <- data.table("cyl_id" = qsm@cylinder$cyl_id, "length" = qsm@cylinder$length)
+  axis <- data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "axis_X" = qsm@cylinder$axis_X,
+    "axis_Y" = qsm@cylinder$axis_Y,
+    "axis_Z" = qsm@cylinder$axis_Z)
 
   # loop through branches
   for (branch_id in unique(qsm@cylinder$branch)) {
 
     # get indices of current branch rows
-    sub_idx <- which(qsm@cylinder$branch == branch_id)
-    first_cyl <- which(qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1)
+    sub_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id]
+    first_cyl <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
 
     # derive basic stats
-    branch_order <- qsm@cylinder$BranchOrder[first_cyl]
-    branch_diameter <-  2 * qsm@cylinder$radius[first_cyl]
-    branch_volume <- sum(1000 * pi * length[sub_idx] * radius[sub_idx] ** 2)
-    branch_area <- sum(2 * pi * length[sub_idx] * radius[sub_idx])
-    branch_length <- sum(length[sub_idx])
+    branch_order <- qsm@cylinder$BranchOrder[qsm@cylinder$cyl_id == first_cyl]
+    branch_diameter <-  2 * radius$radius[radius$cyl_id == first_cyl]
+    branch_volume <- sum(1000 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx] ** 2)
+    branch_area <- sum(2 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx])
+    branch_length <- sum(length$length[length$cyl_id %in% sub_idx])
     branch_height <- qsm@cylinder$start_Z[first_cyl] - qsm@cylinder$start_Z[1]
 
     # if the first cylinder is added to fill a gap,
     # use the second cylinder to compute the angle
-    if (qsm@cylinder$added[first_cyl] == 1 & length(sub_idx) > 1) {
+    if (qsm@cylinder$added[qsm@cylinder$cyl_id == first_cyl] == 1 & length(sub_idx) > 1) {
       first_considered <- sub_idx[2]
     } else {
       first_considered <- first_cyl
     }
-    parent_cyl <- qsm@cylinder$parent[first_considered]
-    branch_angle <- ifelse(parent_cyl > 0, 180/pi*acos(axis[first_considered,] %*% axis[parent_cyl,]), 0)
+    parent_cyl <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl]
+    branch_angle <- ifelse(parent_cyl > 0, 180 / pi *
+                             acos(as.numeric(axis[axis$cyl_id == first_considered,2:4]) %*%
+                                    as.numeric(axis[axis$cyl_id == parent_cyl,2:4])), 0)
 
     # derive branch azimuth and zenith
-    branch_azimuth <- 180 / pi * atan2(axis[first_cyl,2], axis[first_cyl,1])
-    branch_zenith <- 180  / pi * acos(axis[first_cyl,3])
+    branch_azimuth <- 180 / pi * atan2(axis$axis_Y[axis$cyl_id == first_cyl], axis$axis_X[axis$cyl_id == first_cyl])
+    branch_zenith <- 180 / pi * acos(axis$axis_Z[axis$cyl_id == first_cyl])
 
     # get parent cylinder
-    first_cyl_idx <- which(qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1)
-    parent_cyl_idx <- qsm@cylinder$parent[first_cyl_idx]
+    first_cyl_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
+    parent_cyl_idx <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl_idx]
     if (parent_cyl_idx > 0) {
-      branch_parent <- qsm@cylinder$branch[parent_cyl_idx]
+      branch_parent <- qsm@cylinder$branch[qsm@cylinder$cyl_id == parent_cyl_idx]
     } else {
       branch_parent <- 0
     }
 
     # append branch data
     branch_curr <- data.table(
+      "bra_id" = branch_id,
       "order" = as.integer(branch_order),
       "parent" = as.integer(branch_parent),
       "diameter" = branch_diameter,
@@ -612,8 +619,21 @@ writeQSM <- function(qsm, file_path) {
 ################################################################################
 
 get_location <- function(qsm) {
-  # TODO
-  print("todo")
+
+  # get starting coordinates of stem base
+  base_id <- qsm@cylinder$cyl_id[qsm@cylinder$BranchOrder == 0 & qsm@cylinder$PositionInBranch == 1]
+  location <- list(
+    "x" = qsm@cylinder$start_X[qsm@cylinder$cyl_id == base_id],
+    "y" = qsm@cylinder$start_Y[qsm@cylinder$cyl_id == base_id],
+    "z" = qsm@cylinder$start_Z[qsm@cylinder$cyl_id == base_id])
+
+  # show results
+  cat("x:", round(location[["x"]], 2), "\n")
+  cat("y:", round(location[["y"]], 2), "\n")
+  cat("z:", round(location[["z"]], 2), "\n")
+
+  # return results
+  return(invisible(location))
 }
 
 get_stemtaper <- function(qsm) {
