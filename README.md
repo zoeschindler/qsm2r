@@ -18,7 +18,7 @@ remotes::install_github("zoeschindler/qsm2r")
 
 ```R
 # load qsm
-file_path <- system.file("extdata", "medium.mat", package="qsm2r")
+file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 qsm <- readQSM(file_path)
 
 # get summary

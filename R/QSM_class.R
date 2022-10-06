@@ -46,13 +46,13 @@ setMethod(
   function(object) {
     cat("class:       ", class(object), "\n")
     cat("name:        ", object@name, "\n")
-    cat("DBH:         ", round(obj@overview$DBHcyl * 100), "cm\n")
-    cat("height:      ", round(obj@overview$TreeHeight, 2), "m\n")
+    cat("DBH:         ", round(object@overview$DBHcyl * 100), "cm\n")
+    cat("height:      ", round(object@overview$TreeHeight, 2), "m\n")
     cat("cylinders    ", "\n")
     cat("  - count:   ", nrow(object@cylinder), "\n")
-    cat("  - length:  ", round(obj@overview$TotalLength, 2), "m\n")
-    cat("  - area:    ", round(obj@overview$TotalArea, 2), "m²\n")
-    cat("  - volume:  ", round(obj@overview$TotalVolume / 1000, 2), "m³\n")
+    cat("  - length:  ", round(object@overview$TotalLength, 2), "m\n")
+    cat("  - area:    ", round(object@overview$TotalArea, 2), "m²\n")
+    cat("  - volume:  ", round(object@overview$TotalVolume / 1000, 2), "m³\n")
     return(invisible(object))
   }
 )
@@ -86,7 +86,7 @@ setMethod(
     cylinder$end_Z = cylinder$start_Z + cylinder$axis_Z * cylinder$length
 
     # create color ramp
-    cyl_vals <- unique(cylinder[,get(col_var)])
+    cyl_vals <- unique(cylinder[,eval(col_var)]) # sometimes it needs eval, sometimes get?
     col_n <- length(cyl_vals)
     col_vec <- pal(col_n)
 
@@ -98,7 +98,7 @@ setMethod(
     # assign the colors to the cylinders
     cylinder$color <- NA
     for (idx in 1:col_n) {
-      cylinder$color[cylinder[,get(col_var)] == cyl_vals[idx]] <- col_vec[idx]
+      cylinder$color[cylinder[,eval(col_var)] == cyl_vals[idx]] <- col_vec[idx]
     }
 
     # print progress

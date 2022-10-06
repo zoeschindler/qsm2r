@@ -1,11 +1,18 @@
 Package: qsm2r
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Import and analyze QSMs from TreeQSM in R
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Zoe Schindler
+Maintainer: Zoe Schindler <zoe.schindler@wwd.uni-freiburg.de>
+Description: qsm2r is an R package to import and analyze QSMs (quantitative structure models) created in Matlab using TreeQSM.
+License: GPL-3.0 license
 Encoding: UTF-8
 LazyData: true
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+Imports:
+	data.table,
+	R.matlab,
+	rgl
