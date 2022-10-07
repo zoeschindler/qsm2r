@@ -61,7 +61,7 @@ setMethod(
   "plot",
   "QSM",
   function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = rainbow,
-           bg = "grey20", window = c(500,500), sides = 6) {
+           bg = "#22272E", window = c(500,500), sides = 6) {
 
     # col:        single color to use for all cylinders
     # col_var:    which variable to use for coloring (e.g. branch, BranchOrder)

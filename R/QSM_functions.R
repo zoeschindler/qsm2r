@@ -636,6 +636,17 @@ get_location <- function(qsm) {
   return(invisible(location))
 }
 
+set_location <- function(qsm, coordinates) {
+
+  # recenter cylinders from coordinates to (0|0|0)
+  qsm@cylinder$start_X <- qsm@cylinder$start_X - coordinates$x
+  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - coordinates$y
+  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - coordinates$z
+
+  # return results
+  return(qsm)
+}
+
 get_stemtaper <- function(qsm) {
   # TODO
   print("todo")
