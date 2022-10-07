@@ -1,6 +1,6 @@
 # qsm2r: Import and analyze QSMs from TreeQSM in R 
 
-## Description <img src="https://raw.githubusercontent.com/zoeschindler/qsm2r/main/inst/figures/logo.png" align="right" width = 300/>
+## Description <img src="https://github.com/zoeschindler/qsm2r/blob/7eb84f099cd20f4ea547d9c24a1801af34ca9999/inst/figures/logo.png" align="right" width = 300/>
 
 `qsm2r` is an R package to read in and analyze QSMs (quantitative structure models) created in Matlab using <a href = "https://github.com/InverseTampere/TreeQSM">TreeQSM</a>.
 
