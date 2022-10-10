@@ -1,14 +1,4 @@
 ################################################################################
-# DEPENDENCIES
-################################################################################
-
-library(data.table)
-library(rgl)
-library(R.matlab)
-
-# library(terra)
-
-################################################################################
 # CLASS DEFINITION
 ################################################################################
 
@@ -26,8 +16,8 @@ setClass(
   ),
   prototype = list(
     name = "tree",
-    cylinder = data.table(),
-    branch = data.table(),
+    cylinder = data.table::data.table(),
+    branch = data.table::data.table(),
     overview = list(),
     input_parameters = list(),
     filter_parameters = list(),
@@ -51,16 +41,18 @@ setMethod(
     cat("cylinders    ", "\n")
     cat("  - count:   ", nrow(object@cylinder), "\n")
     cat("  - length:  ", round(object@overview$TotalLength, 2), "m\n")
-    cat("  - area:    ", round(object@overview$TotalArea, 2), "m²\n")
-    cat("  - volume:  ", round(object@overview$TotalVolume / 1000, 2), "m³\n")
+    cat("  - area:    ", round(object@overview$TotalArea, 2), "m^2\n")
+    cat("  - volume:  ", round(object@overview$TotalVolume / 1000, 2), "m^3\n")
     return(invisible(object))
   }
 )
 
+################################################################################
+
 setMethod(
   "plot",
   "QSM",
-  function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = rainbow,
+  function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
            bg = "#22272E", window = c(500,500), sides = 6) {
 
     # col:        single color to use for all cylinders
@@ -107,7 +99,7 @@ setMethod(
     # prepare cylinders
     # https://stackoverflow.com/a/70684628/13427882
     cylinder_list <- lapply(1:nrow(cylinder), function(i) {
-      cyl <- cylinder3d(
+      cyl <- rgl::cylinder3d(
         center = cbind(
           c(cylinder$start_X[i], cylinder$end_X[i]),
           c(cylinder$start_Y[i], cylinder$end_Y[i]),
@@ -123,10 +115,10 @@ setMethod(
     message("plotting cylinders ...")
 
     # plot cylinders
-    open3d()
-    par3d(windowRect = c(50, 50, window[1] + 50, window[2] + 50))
-    bg3d(bg)
-    shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = FALSE)
+    rgl::open3d()
+    rgl::par3d(windowRect = c(50, 50, window[1] + 50, window[2] + 50))
+    rgl::bg3d(bg)
+    rgl::shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = FALSE)
   }
 )
 

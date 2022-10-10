@@ -2,12 +2,12 @@
 # HELPER FUNCTIONS
 ################################################################################
 
-# loops through list entries
-# assumes that all selected list entries are scalars of the same length
-# transforms each list entry to a data frame column
-
 get_as_df <- function(target_list, dim = 1) {
-
+  #
+  # loops through list entries
+  # assumes that all selected list entries are scalars of the same length
+  # transforms each list entry to a data frame column
+  #
   # target_list: list to be converted into a data frame
   # dim:         only used if first entry of list has multiple dimensions,
   #              dim = 1 -> stored as one variable per column
@@ -48,6 +48,28 @@ get_as_df <- function(target_list, dim = 1) {
 # FUNCTIONS
 ################################################################################
 
+#' Read QSM from Matlab file
+#'
+#' @description
+#' \code{readQSM} reads in one QSM from a \code{*.mat} file created with
+#' \href{https://github.com/InverseTampere/TreeQSM}{TreeQSM} in Matlab.
+#'
+#' @param file_path Path to the \code{*.mat} file.
+#' @param qsm_var Name of the variable in the file in which the QSM is stored.
+#' Uses per default the first variable in the file.
+#' @param qsm_idx  Index of the QSM in the variable is stored in.
+#' Uses per default the first QSM in the variable.
+#'
+#' @return
+#' A new object of class \code{QSM}.
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # inspect qsm
+#' print(qsm)
 readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
 
   # data_in: path to a matlab file containing the qsm or the read in matlab file
@@ -56,7 +78,7 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
 
   # check datatype
   if (is(file_path, "character")) {
-    data_mat <- readMat(file_path)  # read matlab file from path
+    data_mat <- R.matlab::readMat(file_path)  # read matlab file from path
   } else {
     stop("input must be from class 'character'")
   }
@@ -145,13 +167,38 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
   return(qsm)
 }
 
+################################################################################
+
+#' Check if QSM must be updated
+#'
+#' @description
+#' \code{checkQSM} conducts some superficial tests whether the \code{overview}
+#' and \code{branch} data are up-to-date with the \code{cylinder} data of a
+#' \code{QSM} object.
+#'
+#' @param qsm An object of class \code{QSM}.
+#' @param precision Number of decimal points to be compared.
+#'
+#' @return
+#' A logical. \code{TRUE} if the object is likely up-to-date, \code{FALSE} if
+#' the object needs to be updated.
+#'
+#' @seealso \code{\link{updateQSM}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # check qsm
+#' checkQSM(qsm)
 checkQSM <- function(qsm, precision = 2L) {
 
-  if (!class(qsm) == "QSM") {
+  if (!is(qsm, "QSM")) {
     stop("input must be from class 'QSM'")
   }
 
-  if (!class(precision) == "integer") {
+  if (!is(precision, "integer")) {
     stop("precision must be an integer")
   } else if (precision < 0 | precision > 10) {
     stop("precision must be between 1 and 10")
@@ -201,6 +248,8 @@ checkQSM <- function(qsm, precision = 2L) {
   return(invisible(fine))
 }
 
+################################################################################
+
 updateQSM_basics <- function(qsm) {
 
   # prepare storage
@@ -240,6 +289,8 @@ updateQSM_basics <- function(qsm) {
   # return results
   return(qsm)
 }
+
+################################################################################
 
 updateQSM_crown <- function(qsm) {
 
@@ -513,6 +564,8 @@ updateQSM_crown <- function(qsm) {
   return(qsm)
 }
 
+################################################################################
+
 updateQSM_branch <- function(qsm) {
 
   # prepare storage
@@ -589,9 +642,33 @@ updateQSM_branch <- function(qsm) {
 
   # return results
   return(qsm)
-
 }
 
+################################################################################
+
+#' Update QSM
+#'
+#' @description
+#' \code{updateQSM} updates the \code{overview} and \code{branch} data of a
+#' \code{QSM} object based on its \code{cylinder} data.
+#'
+#' @param qsm An object of class \code{QSM}.
+#'
+#' @return
+#' An updated object of class \code{QSM}.
+#'
+#' @seealso \code{\link{checkQSM}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # delete some cylinders
+#' qsm@cylinder <- qsm@cylinder[qsm@cylinder$BranchOrder <= 3,]
+#'
+#' # update qsm
+#' updateQSM(qsm)
 updateQSM <- function(qsm) {
 
   # update basic statistics based on cylinder
@@ -610,9 +687,11 @@ updateQSM <- function(qsm) {
   return(qsm)
 }
 
+################################################################################
+
 writeQSM <- function(qsm, file_path) {
   # TODO: which datatype? rds?
-  # TODO: change readQSM depending on output datatype
+  # TODO: change readQSM depending on output datatype?
   return(invisible(file_path))
 }
 
@@ -636,61 +715,83 @@ get_location <- function(qsm) {
   return(invisible(location))
 }
 
-set_location <- function(qsm, coordinates) {
+################################################################################
 
-  # recenter cylinders from coordinates to (0|0|0)
-  qsm@cylinder$start_X <- qsm@cylinder$start_X - coordinates$x
-  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - coordinates$y
-  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - coordinates$z
+set_location <- function(qsm, location) {
+
+  # recenter cylinders from location to (0|0|0)
+  qsm@cylinder$start_X <- qsm@cylinder$start_X - location$x
+  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - location$y
+  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - location$z
 
   # return results
   return(qsm)
 }
+
+################################################################################
 
 get_stemtaper <- function(qsm) {
   # TODO
   print("todo")
 }
 
+################################################################################
+
 summary_branchorder <- function(qsm) {
   # TODO
   print("todo")
 }
+
+################################################################################
 
 summary_cylinder_diameter <- function(qsm) {
   # TODO
   print("todo")
 }
 
+################################################################################
+
 summary_cylinder_height <- function(qsm) {
   # TODO
   print("todo")
 }
+
+################################################################################
 
 summary_cylinder_zenith <- function(qsm) {
   # TODO
   print("todo")
 }
 
+################################################################################
+
 summary_cylinder_azimuth <- function(qsm) {
   # TODO
   print("todo")
 }
+
+################################################################################
 
 summary_branch_diameter <- function(qsm) {
   # TODO
   print("todo")
 }
 
+################################################################################
+
 summary_branch_height <- function(qsm) {
   # TODO
   print("todo")
 }
 
+################################################################################
+
 summary_branch_zenith <- function(qsm) {
   # TODO
   print("todo")
 }
+
+################################################################################
 
 summary_branch_azimuth <- function(qsm) {
   # TODO
