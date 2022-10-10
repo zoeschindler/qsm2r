@@ -45,6 +45,56 @@ get_as_df <- function(target_list, dim = 1) {
 }
 
 ################################################################################
+
+random_orth_norm <- function(x, y, z) {
+
+  # get random vector
+  orth_x <- rnorm(length(x))
+  orth_y <- rnorm(length(y))
+  orth_z <- (-x * orth_x - y * orth_y) / z
+
+  # normalize vector
+  orth_len <- sqrt(orth_x**2 + orth_y**2 + orth_z**2) # 3D length
+  orth_x <- orth_x / orth_len
+  orth_y <- orth_y / orth_len
+  orth_z <- orth_z / orth_len
+
+  # combine and rename
+  orth_vec <- data.table::data.table(
+    "orth_X" = orth_x,
+    "orth_Y" = orth_y,
+    "orth_Z" = orth_z)
+
+  # return result
+  return(orth_vec)
+}
+
+################################################################################
+
+two_vector_orth_norm <- function(x1, y1, z1, x2, y2, z2) {
+
+  # get orthogonal vector
+  orth_x <- y1 * z2 - z1 * y2
+  orth_y <- z1 * x2 - x1 * z2
+  orth_z <- x1 * y2 - y1 * x2
+
+  # normalize vector
+  orth_len <- sqrt(orth_x**2 + orth_y**2 + orth_z**2) # 3D length
+  orth_x <- orth_x / orth_len
+  orth_y <- orth_y / orth_len
+  orth_z <- orth_z / orth_len
+
+  # combine and rename
+  orth_vec <- data.table::data.table(
+    "orth_X" = orth_x,
+    "orth_Y" = orth_y,
+    "orth_Z" = orth_z)
+
+  # return result
+  return(orth_vec)
+}
+
+################################################################################
 # FUNCTIONS
 ################################################################################
 
@@ -154,8 +204,8 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
   qsm <- new(
     "QSM",
     name = input_parameters[["name"]],
-    cylinder = as.data.table(cylinder),
-    branch  = as.data.table(branch),
+    cylinder = data.table::as.data.table(cylinder),
+    branch  = data.table::as.data.table(branch),
     overview = as.list(treedata_overview),
     input_parameters = as.list(input_parameters),
     filter_parameters = as.list(filter_parameters),
@@ -292,118 +342,115 @@ updateQSM_basics <- function(qsm) {
 
 ################################################################################
 
+cylinder_2_points <- function(cylinder) {
+
+  # create empty columns
+  cylinder$orth_1_X <- cylinder$orth_1_Y <- cylinder$orth_1_Z <- NA
+
+  # get unit vectors orthogonal to axis
+  cylinder[,c("orth_1_X", "orth_1_Y", "orth_1_Z")] <- random_orth_norm(
+    cylinder$axis_X, cylinder$axis_Y, cylinder$axis_Z)
+
+  # create subsets
+  trunk_cyl  <- cylinder[cylinder$branch == 1,]
+  branch_cyl <- cylinder[cylinder$branch > 1,]
+
+  # duplicate rows accordingly
+  trunk_cyl  <- trunk_cyl[rep(1:nrow(trunk_cyl), each = 4 * 12),]
+  branch_cyl <- branch_cyl[rep(1:nrow(branch_cyl), each = 4),]
+
+  # add column length_mod
+  trunk_cyl$length_mod  <- rep(rep(seq(0.25, 1, 0.25), each = 12), length.out = nrow(trunk_cyl))
+  branch_cyl$length_mod <- 0.5
+
+  # add column angle_mod
+  trunk_cyl$angle_mod  <- rep(seq(0, 2*pi, length.out = 12), length.out = nrow(trunk_cyl))
+  branch_cyl$angle_mod <- rep(seq(0, 2*pi, length.out = 4), length.out = nrow(branch_cyl))
+
+  # combine data frames
+  cylinder <- rbind(trunk_cyl, branch_cyl)
+  rm(trunk_cyl, branch_cyl)
+
+  # get circle centers along cylinder axis
+  cylinder$center_X <- cylinder$start_X + cylinder$length_mod * cylinder$length * cylinder$axis_X
+  cylinder$center_Y <- cylinder$start_Y + cylinder$length_mod * cylinder$length * cylinder$axis_Y
+  cylinder$center_Z <- cylinder$start_Z + cylinder$length_mod * cylinder$length * cylinder$axis_Z
+
+  # create empty columns
+  cylinder$orth_2_X <- cylinder$orth_2_Y <- cylinder$orth_2_Z <- NA
+
+  # get unit vector orthogonal to orth_1 and axis
+  cylinder[,c("orth_2_X", "orth_2_Y", "orth_2_Z")] <- two_vector_orth_norm(
+    cylinder$axis_X, cylinder$axis_Y, cylinder$axis_Z,
+    cylinder$orth_1_X, cylinder$orth_1_Y, cylinder$orth_1_Z)
+
+  # prepare storage
+  out <- data.table::data.table()
+
+  # derive surface points
+  out$X <- cylinder$center_X +
+    cylinder$radius * cylinder$orth_1_X * cos(cylinder$angle_mod) +
+    cylinder$radius * cylinder$orth_2_X * sin(cylinder$angle_mod)
+  out$Y <- cylinder$center_Y +
+    cylinder$radius * cylinder$orth_1_Y * cos(cylinder$angle_mod) +
+    cylinder$radius * cylinder$orth_2_Y * sin(cylinder$angle_mod)
+  out$Z <- cylinder$center_Z +
+    cylinder$radius * cylinder$orth_1_Z * cos(cylinder$angle_mod) +
+    cylinder$radius * cylinder$orth_2_Z * sin(cylinder$angle_mod)
+
+  # return results
+  return(out)
+}
+
+################################################################################
+
 updateQSM_crown <- function(qsm) {
 
   # prepare storage
   overview <- qsm@overview
 
-  # TODO :(
+  # PART 1: create point cloud from cylinders
+  points <- cylinder_2_points(qsm@cylinder)
+  points_xy <- unique(points[,c("X", "Y")]) # TODO: check if we even need Z somewhere
 
-  # $CrownDiamAve
-  # $CrownDiamMax
-  # $CrownAreaConv
-  # $CrownAreaAlpha
-  # $CrownBaseHeight
-  # $CrownLength
-  # $CrownRatio
-  # $CrownVolumeConv
-  # $CrownVolumeAlpha
+  # PART 2: Vertical profiles
+  # I don't care about the spreads
 
-  #   function [treedata,spreads] = crown_measures(treedata,cylinder,branch)
-  #
-  #   %% Generate point clouds from the cylinder model
-  #   Axe = cylinder.axis;
-  #   Len = cylinder.length;
-  #   Sta = cylinder.start;
-  #   Tip = Sta+[Len.*Axe(:,1) Len.*Axe(:,2) Len.*Axe(:,3)]; % tips of the cylinders
-  #   nc = length(Len);
-  #   P = zeros(5*nc,3); % four mid points on the cylinder surface
-  #   t = 0;
-  #   for i = 1:nc
-  #     [U,V] = orthonormal_vectors(Axe(i,:)); # vectors U & V are unit vectors orthogonal to themselves and to the input vector U
-  #     U = cylinder.radius(i)*U;
-  #     if cylinder.branch(i) == 1
-  #       % For stem cylinders generate more points
-  #       R = rotation_matrix(Axe(i,:),pi/12);
-  #       for k = 1:4
-  #         M = Sta(i,:)+k/4*Len(i)*Axe(i,:);
-  #         for j = 1:12
-  #           if j > 1
-  #             U = R*U;
-  #           end
-  #           t = t+1;
-  #           P(t,:) = M+U';
-  #         end
-  #       end
-  #     else
-  #       M = Sta(i,:)+0.5*Len(i)*Axe(i,:);
-  #       R = rotation_matrix(Axe(i,:),pi/4);
-  #       for j = 1:4
-  #         if j > 1
-  #           U = R*U;
-  #         end
-  #         t = t+1;
-  #         P(t,:) = M+U';
-  #       end
-  #     end
-  #   end
-  #
-  #   P = P(1:t,:);
-  #   I = ~isnan(P(:,1));
-  #   P = P(I,:);
-  #   P = double([P; Sta; Tip]);
-  #   P = unique(P,'rows');
-  #
-  ############################################################################
-  #
-  #   %% Vertical profiles (layer diameters/spreads), mean:
-  #   bot = min(P(:,3));
-  #   top = max(P(:,3));
-  #   Hei = top-bot;
-  #   if Hei > 10
-  #     m = 20;
-  #   elseif Hei > 2
-  #     m = 10;
-  #   else
-  #     m = 5;
-  #   end
-  #   spreads = zeros(m,18);
-  #   for j = 1:m
-  #     I = P(:,3) >= bot+(j-1)*Hei/m & P(:,3) < bot+j*Hei/m;
-  #     X = unique(P(I,:),'rows');
-  #     if size(X,1) > 5
-  #       [K,A] = convhull(X(:,1),X(:,2));
-  #       % compute center of gravity for the convex hull and use it as
-  #       % center for computing average diameters
-  #       n = length(K);
-  #       x = X(K,1);
-  #       y = X(K,2);
-  #       CX = sum((x(1:n-1)+x(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
-  #       CY = sum((y(1:n-1)+y(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
-  #
-  #       V = mat_vec_subtraction(X(:,1:2),[CX CY]);
-  #       ang = atan2(V(:,2),V(:,1))+pi;
-  #       [ang,I] = sort(ang);
-  #       L = sqrt(sum(V.*V,2));
-  #       L = L(I);
-  #       for i = 1:18
-  #         I = ang >= (i-1)*pi/18 & ang < i*pi/18;
-  #         if any(I)
-  #           L1 = max(L(I));
-  #         else
-  #           L1 = 0;
-  #         end
-  #         J = ang >= (i-1)*pi/18+pi & ang < i*pi/18+pi;
-  #         if any(J)
-  #           L2 = max(L(J));
-  #         else
-  #           L2 = 0;
-  #         end
-  #         spreads(j,i) = L1+L2;                                             # SPREADS
-  #       end
-  #     end
-  #   end
-  #
+  # PART 3: Crown diameters
+
+  # get coordinates of convex hull
+  idx <- chull(points_xy)
+  idx <- c(idx, idx[1])
+  n <- length(idx)
+  x <- points_xy$X[idx]
+  y <- points_xy$Y[idx]
+
+  # get centroid of the polygon
+  conv_area <- 0.5 * sum(x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)])
+  center_X <- sum((x[1:(n - 1)] + x[2:n]) * (x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)]))/6/conv_area
+  center_Y <- sum((y[1:(n - 1)] + y[2:n]) * (x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)]))/6/conv_area
+
+  # calculate vector from center to cylinder tips
+  vec_to_tips <- data.table::data.table(
+    "vec_X" = (qsm@cylinder$start_X + qsm@cylinder$length * qsm@cylinder$axis_X) - center_X,
+    "vec_Y" = (qsm@cylinder$start_Y + qsm@cylinder$length * qsm@cylinder$axis_Y) - center_Y)
+
+  # calculate vector from center to cylinder tips
+  vec_to_tips$angle <- atan2(vec_to_tips$vec_Y, vec_to_tips$vec_X) + pi # + pi to make values positive?
+
+  # overwrite old data
+  overview$CrownAreaConv    <- conv_area
+  overview$CrownDiamAve     <- NA
+  overview$CrownDiamMax     <- NA
+  overview$CrownAreaAlpha   <- NA
+  overview$CrownBaseHeight  <- NA
+  overview$CrownLength      <- NA
+  overview$CrownRatio       <- NA
+  overview$CrownVolumeConv  <- NA
+  overview$CrownVolumeAlpha <- NA
+
+  print("work in progress")
+
   ############################################################################
   #
   #   %% Crown diameters (spreads), mean and maximum:
@@ -416,12 +463,14 @@ updateQSM_crown <- function(qsm) {
   #   y = X(K,2);
   #   CX = sum((x(1:n-1)+x(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
   #   CY = sum((y(1:n-1)+y(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
+
   #   V = Tip(:,1:2)-[CX CY];
   #   ang = atan2(V(:,2),V(:,1))+pi;
   #   [ang,I] = sort(ang);
   #   L = sqrt(sum(V.*V,2));
   #   L = L(I);
   #   S = zeros(18,1);
+
   #   for i = 1:18
   #     I = ang >= (i-1)*pi/18 & ang < i*pi/18;
   #     if any(I)
@@ -437,8 +486,10 @@ updateQSM_crown <- function(qsm) {
   #     end
   #     S(i) = L1+L2;
   #   end
-  #   treedata.CrownDiamAve = mean(S);                                        # HERE
+
+  #   treedata.CrownDiamAve = mean(S);                                          # HERE
   #   MaxDiam = 0;
+  #
   #   for i = 1:n
   #     V = mat_vec_subtraction([x y],[x(i) y(i)]);
   #     L = max(sqrt(sum(V.*V,2)));
@@ -446,15 +497,15 @@ updateQSM_crown <- function(qsm) {
   #       MaxDiam = L;
   #     end
   #   end
-  #   treedata.CrownDiamMax = L;                                              # HERE
+  #   treedata.CrownDiamMax = MaxDiam;                                          # HERE
   #
   ############################################################################
   #
   #   %% Crown areas from convex hull and alpha shape:
-  #   treedata.CrownAreaConv = A;                                             # HERE
+  #   treedata.CrownAreaConv = A;                                               # HERE
   #   alp = max(0.5,treedata.CrownDiamAve/10);
   #   shp = alphaShape(X(:,1),X(:,2),alp);
-  #   treedata.CrownAreaAlpha = shp.area;                                     # HERE
+  #   treedata.CrownAreaAlpha = shp.area;                                       # HERE
   #
   ############################################################################
   #
@@ -532,33 +583,33 @@ updateQSM_crown <- function(qsm) {
   #         BaseHeight = h;
   #       end
   #     end
-  #     treedata.CrownBaseHeight = BaseHeight-Sta(1,3);                       # HERE
+  #     treedata.CrownBaseHeight = BaseHeight-Sta(1,3);                         # HERE
   #
   #     %% Crown length and ratio
-  #     treedata.CrownLength = treedata.TreeHeight-treedata.CrownBaseHeight;  # HERE
-  #     treedata.CrownRatio = treedata.CrownLength/treedata.TreeHeight;       # HERE
+  #     treedata.CrownLength = treedata.TreeHeight-treedata.CrownBaseHeight;    # HERE
+  #     treedata.CrownRatio = treedata.CrownLength/treedata.TreeHeight;         # HERE
   #
   #     %% Crown volume from convex hull and alpha shape:
   #     I = P(:,3) >= BaseHeight;
   #     X = P(I,:);
   #     [K,V] = convhull(X(:,1),X(:,2),X(:,3));
-  #     treedata.CrownVolumeConv = V;                                         # HERE
+  #     treedata.CrownVolumeConv = V;                                           # HERE
   #     alp = max(0.5,treedata.CrownDiamAve/5);
   #     shp = alphaShape(X(:,1),X(:,2),X(:,3),alp,'HoleThreshold',10000);
-  #     treedata.CrownVolumeAlpha = shp.volume;                               # HERE
+  #     treedata.CrownVolumeAlpha = shp.volume;                                 # HERE
   #
   #     else
   #       % No branches
-  #       treedata.CrownBaseHeight = treedata.TreeHeight;                     # HERE
-  #       treedata.CrownLength = 0;                                           # HERE
-  #       treedata.CrownRatio = 0;                                            # HERE
-  #       treedata.CrownVolumeConv = 0;                                       # HERE
-  #       treedata.CrownVolumeAlpha = 0;                                      # HERE
+  #       treedata.CrownBaseHeight = treedata.TreeHeight;                       # HERE
+  #       treedata.CrownLength = 0;                                             # HERE
+  #       treedata.CrownRatio = 0;                                              # HERE
+  #       treedata.CrownVolumeConv = 0;                                         # HERE
+  #       treedata.CrownVolumeAlpha = 0;                                        # HERE
   #     end
   #   end
 
-  # overwrite old data
-  qsm@overview <- overview
+  # # overwrite old data
+  # qsm@overview <- overview
 
   # return results
   return(qsm)
@@ -569,11 +620,15 @@ updateQSM_crown <- function(qsm) {
 updateQSM_branch <- function(qsm) {
 
   # prepare storage
-  branch <- data.table()
+  branch <- data.table::data.table()
 
   # create subsets
-  radius <- data.table("cyl_id" = qsm@cylinder$cyl_id, "radius" = qsm@cylinder$radius)
-  length <- data.table("cyl_id" = qsm@cylinder$cyl_id, "length" = qsm@cylinder$length)
+  radius <- data.table::data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "radius" = qsm@cylinder$radius)
+  length <- data.table::data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "length" = qsm@cylinder$length)
   axis <- data.table(
     "cyl_id" = qsm@cylinder$cyl_id,
     "axis_X" = qsm@cylinder$axis_X,
