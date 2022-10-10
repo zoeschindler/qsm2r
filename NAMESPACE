@@ -1,1 +1,6 @@
 exportPattern("^[[:alpha:]]+")
+
+# load required packages
+import(data.table)
+import(R.matlab)
+import(rgl)
