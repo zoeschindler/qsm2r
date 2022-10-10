@@ -404,102 +404,90 @@ cylinder_2_points <- function(cylinder) {
 
 ################################################################################
 
-updateQSM_crown <- function(qsm) {
+updateQSM_crown <- function(qsm, method = "TreeQSM") {
+
+  # check method argument
+  if(!method %in% c("TreeQSM", "qsm2r")) {
+    stop("method must be either 'TreeQSM' or 'qsm2r'")
+  }
 
   # prepare storage
   overview <- qsm@overview
 
   # PART 1: create point cloud from cylinders
   points <- cylinder_2_points(qsm@cylinder)
-  points_xy <- unique(points[,c("X", "Y")]) # TODO: check if we even need Z somewhere
+  points <- unique(points)
 
-  # PART 2: Vertical profiles
-  # I don't care about the spreads
+  # PART 2: vertical profiles
+  # I don't care about spreads
 
-  # PART 3: Crown diameters
+  # PART 3: crown area & diameter
 
   # get coordinates of convex hull
-  idx <- chull(points_xy)
-  idx <- c(idx, idx[1])
-  n <- length(idx)
-  x <- points_xy$X[idx]
-  y <- points_xy$Y[idx]
+  chull_idx <- grDevices::chull(points[,c("X", "Y")])
+  chull_idx <- c(chull_idx, chull_idx[1])
+  chull_n <- length(chull_idx)
+  chull_x <- points$X[chull_idx]
+  chull_y <- points$Y[chull_idx]
 
   # get centroid of the polygon
-  conv_area <- 0.5 * sum(x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)])
-  center_X <- sum((x[1:(n - 1)] + x[2:n]) * (x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)]))/6/conv_area
-  center_Y <- sum((y[1:(n - 1)] + y[2:n]) * (x[1:(n - 1)]*y[2:n] - x[2:n]*y[1:(n - 1)]))/6/conv_area
+  conv_area <- 0.5 * sum(chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)])
+  center_X <- sum((chull_x[1:(chull_n - 1)] + chull_x[2:chull_n]) *
+                    (chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)]))/6/conv_area
+  center_Y <- sum((chull_y[1:(chull_n - 1)] + chull_y[2:chull_n]) *
+                    (chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)]))/6/conv_area
 
-  # calculate vector from center to cylinder tips
-  vec_to_tips <- data.table::data.table(
-    "vec_X" = (qsm@cylinder$start_X + qsm@cylinder$length * qsm@cylinder$axis_X) - center_X,
-    "vec_Y" = (qsm@cylinder$start_Y + qsm@cylinder$length * qsm@cylinder$axis_Y) - center_Y)
+  # choosing method
+  if (method == "TreeQSM") {
 
-  # calculate vector from center to cylinder tips
-  vec_to_tips$angle <- atan2(vec_to_tips$vec_Y, vec_to_tips$vec_X) + pi # + pi to make values positive?
+    # calculate vector from center to cylinder tips
+    vec_to_tips <- data.table::data.table(
+      "vec_X" = (qsm@cylinder$start_X + qsm@cylinder$length * qsm@cylinder$axis_X) - center_X,
+      "vec_Y" = (qsm@cylinder$start_Y + qsm@cylinder$length * qsm@cylinder$axis_Y) - center_Y)
 
-  # overwrite old data
-  overview$CrownAreaConv    <- conv_area
-  overview$CrownDiamAve     <- NA
-  overview$CrownDiamMax     <- NA
-  overview$CrownAreaAlpha   <- NA
-  overview$CrownBaseHeight  <- NA
-  overview$CrownLength      <- NA
-  overview$CrownRatio       <- NA
-  overview$CrownVolumeConv  <- NA
-  overview$CrownVolumeAlpha <- NA
+    # sort according to angle
+    vec_to_tips$angle <- atan2(vec_to_tips$vec_Y, vec_to_tips$vec_X) + pi
+    vec_to_tips <- vec_to_tips[order(vec_to_tips$angle),]
 
-  print("work in progress")
+    # get lengths of the vectors
+    vec_to_tips$length <- sqrt(vec_to_tips$vec_X**2 +  vec_to_tips$vec_Y**2) # TODO: check this
 
-  ############################################################################
-  #
-  #   %% Crown diameters (spreads), mean and maximum:
-  #   X = unique(P(:,1:2),'rows');
-  #   [K,A] = convhull(X(:,1),X(:,2));
-  #   % compute center of gravity for the convex hull and use it as center for
-  #   % computing average diameters
-  #   n = length(K);
-  #   x = X(K,1);
-  #   y = X(K,2);
-  #   CX = sum((x(1:n-1)+x(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
-  #   CY = sum((y(1:n-1)+y(2:n)).*(x(1:n-1).*y(2:n)-x(2:n).*y(1:n-1)))/6/A;
+    # prepare storage
+    crown_widths <- c()
 
-  #   V = Tip(:,1:2)-[CX CY];
-  #   ang = atan2(V(:,2),V(:,1))+pi;
-  #   [ang,I] = sort(ang);
-  #   L = sqrt(sum(V.*V,2));
-  #   L = L(I);
-  #   S = zeros(18,1);
+    # loop through 10 degree steps
+    for (section in 1:18) {
 
-  #   for i = 1:18
-  #     I = ang >= (i-1)*pi/18 & ang < i*pi/18;
-  #     if any(I)
-  #       L1 = max(L(I));
-  #     else
-  #       L1 = 0;
-  #     end
-  #     J = ang >= (i-1)*pi/18+pi & ang < i*pi/18+pi;
-  #     if any(J)
-  #       L2 = max(L(J));
-  #     else
-  #       L2 = 0;
-  #     end
-  #     S(i) = L1+L2;
-  #   end
+      # get length in one direction
+      idx_1 <- which(vec_to_tips$angle >= (section-1)*pi/18 & vec_to_tips$angle < section*pi/18)
+      len_1 <- ifelse(length(idx_1) > 0, max(vec_to_tips$angle[idx_1]), 0)
 
-  #   treedata.CrownDiamAve = mean(S);                                          # HERE
-  #   MaxDiam = 0;
-  #
-  #   for i = 1:n
-  #     V = mat_vec_subtraction([x y],[x(i) y(i)]);
-  #     L = max(sqrt(sum(V.*V,2)));
-  #     if L > MaxDiam
-  #       MaxDiam = L;
-  #     end
-  #   end
-  #   treedata.CrownDiamMax = MaxDiam;                                          # HERE
-  #
-  ############################################################################
+      # get length in opposite direction
+      idx_2 <- which(vec_to_tips$angle >= ((section-1)*pi/18 + pi) & vec_to_tips$angle < (section*pi/18 + pi))
+      len_2 <- ifelse(length(idx_2) > 0, max(vec_to_tips$angle[idx_2]), 0)
+
+      # add crown width
+      crown_widths <- c(crown_widths, len_1 + len_2)
+    }
+
+    # derive average crown width from section crown widths
+    avg_crown_width <- mean(crown_widths)
+
+  } else if (method == "qsm2r") {
+
+    # derive average crown width from crown projection area
+    avg_crown_width <- 2 * sqrt(abs(conv_area) / pi)
+
+  }
+
+  # calculate maximum spread in the data
+  max_crown_width <- max(dist(cbind(chull_x, chull_y)))
+
+  # # derive alphahull
+  # alpha_value <- max(0.5, avg_crown_width/10)
+  # alpha_points <- unique(points[, c("X", "Y")])
+  # alpha_shape <- alphahull::ashape(x = alpha_points$X, y = alpha_points$Y, alpha = alpha_value)
+
   #
   #   %% Crown areas from convex hull and alpha shape:
   #   treedata.CrownAreaConv = A;                                               # HERE
@@ -507,8 +495,9 @@ updateQSM_crown <- function(qsm) {
   #   shp = alphaShape(X(:,1),X(:,2),alp);
   #   treedata.CrownAreaAlpha = shp.area;                                       # HERE
   #
-  ############################################################################
-  #
+
+  # PART 4: crown base, length, ratio & volume
+
   #   %% Crown base
   #   % Define first major branch as the branch whose diameter > min(0.05*dbh,5cm)
   #   % and whose horizontal relative reach is more than the median reach of 1st-ord.
@@ -608,8 +597,19 @@ updateQSM_crown <- function(qsm) {
   #     end
   #   end
 
-  # # overwrite old data
-  # qsm@overview <- overview
+  # overwrite old data
+  overview$CrownAreaConv    <- conv_area
+  overview$CrownDiamAve     <- avg_crown_width
+  overview$CrownDiamMax     <- max_crown_width
+  overview$CrownAreaAlpha   <- NA
+  overview$CrownBaseHeight  <- NA
+  overview$CrownLength      <- NA
+  overview$CrownRatio       <- NA
+  overview$CrownVolumeConv  <- NA
+  overview$CrownVolumeAlpha <- NA
+
+  # overwrite old data
+  qsm@overview <- overview
 
   # return results
   return(qsm)
@@ -724,7 +724,7 @@ updateQSM_branch <- function(qsm) {
 #'
 #' # update qsm
 #' updateQSM(qsm)
-updateQSM <- function(qsm) {
+updateQSM <- function(qsm, method = "TreeQSM") {
 
   # update basic statistics based on cylinder
   message("updating basic statistics ...")
@@ -732,7 +732,7 @@ updateQSM <- function(qsm) {
 
   # update crown statistics based on cylinder
   message("updating crown statistics ...")
-  qsm <- updateQSM_crown(qsm)
+  qsm <- updateQSM_crown(qsm, method)
 
   # update branch based on cylinder
   message("updating branch statistics ...")
