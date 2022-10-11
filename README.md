@@ -7,9 +7,6 @@
 ## Installation from source
 
 ```R
-# install dependencies
-install.packages(c("data.table", "R.matlab", "rgl"))
-
 # install package from github
 remotes::install_github("zoeschindler/qsm2r")
 ```
