@@ -14,7 +14,10 @@ VignetteBuilder: knitr
 Imports:
 	data.table,
 	R.matlab,
-	rgl
+	rgl,
+	alphahull,
+	alphashape3d,
+	cxhull
 URL: https://github.com/zoeschindler/qsm2r
 RoxygenNote: 7.2.1
 TreeQSMNote: 2.4.1
