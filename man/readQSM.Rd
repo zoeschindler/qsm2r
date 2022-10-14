@@ -26,6 +26,7 @@ A new object of class \code{QSM}.
 # load qsm
 file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 qsm <- readQSM(file_path)
+# or: qsm <- readQSM(file_path, qsm_var = "OptQSM", qsm_idx = 1)
 
 # inspect qsm
 print(qsm)

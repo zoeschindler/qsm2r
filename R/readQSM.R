@@ -1,50 +1,4 @@
 ################################################################################
-# HELPER FUNCTIONS
-################################################################################
-
-get_as_df <- function(target_list, dim = 1) {
-  #
-  # loops through list entries
-  # assumes that all selected list entries are scalars of the same length
-  # transforms each list entry to a data frame column
-  #
-  # target_list: list to be converted into a data frame
-  # dim:         only used if first entry of list has multiple dimensions,
-  #              dim = 1 -> stored as one variable per column
-  #              dim = 2 -> stored as one variable per row
-
-  # get list names
-  list_names <- names(target_list)
-
-  # prepare empty data frame
-  first_entry = target_list[[list_names[1]]]
-  if (length(first_entry) %in% dim(first_entry)) {
-    list_nrow <- length(first_entry)
-  } else {
-    list_nrow <- dim(first_entry)[dim]
-  }
-  new_df <- data.frame(matrix(NA, nrow = list_nrow, ncol = 0))
-
-  # add data column-wise to data frame
-  for (list_name in list_names) {
-    current_var <- data.frame(matrix(target_list[[list_name]], nrow = list_nrow)) # get data
-    if (ncol(current_var) == 0) {
-      current_var <- data.frame(matrix(NA, ncol = 1, nrow = 0))
-    }
-    colnames(current_var) <- list_name
-    new_df <- cbind(new_df, current_var)
-  }
-
-  # rename columns
-  if (!is.null(col) & length(col) == ncol(new_df)) {
-    colnames(new_df) <- col
-  }
-
-  # return data frame
-  return(new_df)
-}
-
-################################################################################
 # MAIN FUNCTIONS
 ################################################################################
 
@@ -67,6 +21,7 @@ get_as_df <- function(target_list, dim = 1) {
 #' # load qsm
 #' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 #' qsm <- readQSM(file_path)
+#' # or: qsm <- readQSM(file_path, qsm_var = "OptQSM", qsm_idx = 1)
 #'
 #' # inspect qsm
 #' print(qsm)
