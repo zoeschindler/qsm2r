@@ -78,7 +78,7 @@ setMethod(
     cylinder$end_Z = cylinder$start_Z + cylinder$axis_Z * cylinder$length
 
     # create color ramp
-    cyl_vals <- unique(cylinder[,eval(col_var)]) # sometimes it needs eval, sometimes get?
+    cyl_vals <- unique(cylinder[[col_var]])
     col_n <- length(cyl_vals)
     col_vec <- pal(col_n)
 
@@ -90,7 +90,7 @@ setMethod(
     # assign the colors to the cylinders
     cylinder$color <- NA
     for (idx in 1:col_n) {
-      cylinder$color[cylinder[,eval(col_var)] == cyl_vals[idx]] <- col_vec[idx]
+      cylinder$color[cylinder[[col_var]] == cyl_vals[idx]] <- col_vec[idx]
     }
 
     # print progress
@@ -121,10 +121,5 @@ setMethod(
     rgl::shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = FALSE)
   }
 )
-
-# TERRA
-# setMethod("ext", "qsm", function(x, ...) { .ext(x) })
-# setMethod("crs", "qsm", function(x, asText = FALSE) {})
-# setMethod("area", "qsm", function(object) {})
 
 ################################################################################
