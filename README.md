@@ -6,7 +6,7 @@
 
 ## Installation from source
 
-To install the package from github, the package `devtools` is required.
+To install the package from github, the package `remotes` is required.
 
 ```R
 # install package from github
