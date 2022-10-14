@@ -94,7 +94,7 @@ get_stemtaper <- function(qsm) {
 
 ################################################################################
 
-summary_branchorder <- function(qsm) {
+get_spreads <- function(qsm) {
   # TODO
   print("todo")
 }
@@ -103,6 +103,7 @@ summary_branchorder <- function(qsm) {
 
 summary_cylinder_diameter <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, cylinder_distribution('Dia')
   print("todo")
 }
 
@@ -110,6 +111,7 @@ summary_cylinder_diameter <- function(qsm) {
 
 summary_cylinder_height <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, cylinder_height_distribution()
   print("todo")
 }
 
@@ -117,6 +119,7 @@ summary_cylinder_height <- function(qsm) {
 
 summary_cylinder_zenith <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, cylinder_height_distribution('Zen')
   print("todo")
 }
 
@@ -124,6 +127,15 @@ summary_cylinder_zenith <- function(qsm) {
 
 summary_cylinder_azimuth <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, cylinder_height_distribution('Azi')
+  print("todo")
+}
+
+################################################################################
+
+summary_branch_order <- function(qsm) {
+  # TODO
+  # TreeQSM: tree_data.m, branch_order_distribution()
   print("todo")
 }
 
@@ -131,6 +143,7 @@ summary_cylinder_azimuth <- function(qsm) {
 
 summary_branch_diameter <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, branch_distribution('Dia')
   print("todo")
 }
 
@@ -138,6 +151,7 @@ summary_branch_diameter <- function(qsm) {
 
 summary_branch_height <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, branch_distribution('Hei')
   print("todo")
 }
 
@@ -145,6 +159,7 @@ summary_branch_height <- function(qsm) {
 
 summary_branch_zenith <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, branch_distribution('Zen')
   print("todo")
 }
 
@@ -152,6 +167,7 @@ summary_branch_zenith <- function(qsm) {
 
 summary_branch_azimuth <- function(qsm) {
   # TODO
+  # TreeQSM: tree_data.m, branch_distribution('Azi')
   print("todo")
 }
 
