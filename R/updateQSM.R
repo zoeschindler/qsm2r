@@ -128,7 +128,7 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
       "Z" = cylinder$start_Z + cylinder$length * cylinder$axis_Z))
 
   # delete duplicates
-  points <- unique(points)
+  points <- unique(round(points, 6))
 
   ### PART 2: vertical profiles
 
@@ -199,7 +199,7 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
   # derive points of alpha shape
   alpha_value <- max(0.5, avg_crown_width/10)
-  alpha_points <- unique(round(points[,c("X","Y")],6))
+  alpha_points <- unique(points[,c("X","Y")])
   alpha_shape <- alphahull::ashape(x = alpha_points$X, y = alpha_points$Y, alpha = alpha_value) # takes ages
   alpha_idx <- c(alpha_shape$alpha.extremes, alpha_shape$alpha.extremes[1]) # points are unordered
 
@@ -288,7 +288,7 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
   # there is no fitting branch
   } else {
-    print("no crown")
+    message("tree has no crown")
     crown_base_height <- overview$TreeHeight
     crown_length <- 0
     crown_ratio <- 0
