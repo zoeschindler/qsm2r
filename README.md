@@ -6,8 +6,6 @@
 
 ## Installation from source
 
-# For the installation from github, the package `devtools` is required.
-
 ```R
 # install package from github
 remotes::install_github("zoeschindler/qsm2r")
