@@ -1,62 +1,10 @@
 ################################################################################
-# HELPER FUNCTIONS
-################################################################################
-
-random_orth_norm <- function(x, y, z) {
-
-  # get random vector
-  orth_x <- rnorm(length(x))
-  orth_y <- rnorm(length(y))
-  orth_z <- (-x * orth_x - y * orth_y) / z
-
-  # normalize vector
-  orth_len <- sqrt(orth_x**2 + orth_y**2 + orth_z**2) # 3D length
-  orth_x <- orth_x / orth_len
-  orth_y <- orth_y / orth_len
-  orth_z <- orth_z / orth_len
-
-  # combine and rename
-  orth_vec <- data.table::data.table(
-    "orth_X" = orth_x,
-    "orth_Y" = orth_y,
-    "orth_Z" = orth_z)
-
-  # return result
-  return(orth_vec)
-}
-
-################################################################################
-
-two_vector_orth_norm <- function(x1, y1, z1, x2, y2, z2) {
-
-  # get orthogonal vector
-  orth_x <- y1 * z2 - z1 * y2
-  orth_y <- z1 * x2 - x1 * z2
-  orth_z <- x1 * y2 - y1 * x2
-
-  # normalize vector
-  orth_len <- sqrt(orth_x**2 + orth_y**2 + orth_z**2) # 3D length
-  orth_x <- orth_x / orth_len
-  orth_y <- orth_y / orth_len
-  orth_z <- orth_z / orth_len
-
-  # combine and rename
-  orth_vec <- data.table::data.table(
-    "orth_X" = orth_x,
-    "orth_Y" = orth_y,
-    "orth_Z" = orth_z)
-
-  # return result
-  return(orth_vec)
-}
-
-################################################################################
 # MAIN FUNCTIONS
 ################################################################################
 
 updateQSM_basics <- function(qsm) {
 
-  # prepare storage
+  # prepare data
   overview <- qsm@overview
 
   # create subsets
@@ -71,7 +19,7 @@ updateQSM_basics <- function(qsm) {
   overview$TreeHeight     <- max(c(
     qsm@cylinder$start_Z, # base
     qsm@cylinder$start_Z + qsm@cylinder$axis_Z * qsm@cylinder$length)) - # tip
-    qsm@cylinder$start_Z[1]
+    qsm@cylinder$start_Z[qsm@cylinder$BranchOrder == 0 & qsm@cylinder$PositionInBranch == 1]
   #
   overview$TrunkLength    <- sum(trunk_cyl$length)
   overview$BranchLength   <- sum(branch_cyl$length)
@@ -98,16 +46,20 @@ updateQSM_basics <- function(qsm) {
 
 updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
+  # requires up-to-date branch and basic overview data
+
+  # prepare output
+  overview <- qsm@overview
+
   # check method argument
   if (!method %in% c("TreeQSM", "qsm2r")) {
     stop("method must be either 'TreeQSM' or 'qsm2r'")
   }
 
-  # prepare storage
-  overview <- qsm@overview
-  cylinder <- qsm@cylinder
-
   ### PART 1: create point cloud from cylinders
+
+  # prepare data
+  cylinder <- qsm@cylinder
 
   # create empty columns
   cylinder$orth_1_X <- cylinder$orth_1_Y <- cylinder$orth_1_Z <- NA
@@ -129,8 +81,8 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
   branch_cyl$length_mod <- 0.5
 
   # add column angle_mod
-  trunk_cyl$angle_mod  <- rep(seq(0, 2*pi, length.out = 12), length.out = nrow(trunk_cyl))
-  branch_cyl$angle_mod <- rep(seq(0, 2*pi, length.out = 4), length.out = nrow(branch_cyl))
+  trunk_cyl$angle_mod  <- rep(seq(0, 2*pi - 2*pi/12, length.out = 12), length.out = nrow(trunk_cyl))
+  branch_cyl$angle_mod <- rep(seq(0, 2*pi - 2*pi/4,  length.out = 4), length.out = nrow(branch_cyl))
 
   # combine data frames
   cylinder <- rbind(trunk_cyl, branch_cyl)
@@ -163,14 +115,29 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
     cylinder$radius * cylinder$orth_1_Z * cos(cylinder$angle_mod) +
     cylinder$radius * cylinder$orth_2_Z * sin(cylinder$angle_mod)
 
+  # add tips and starts
+  points <- rbind(
+    points,
+    data.table::data.table(
+      "X" = cylinder$start_X,
+      "Y" = cylinder$start_Y,
+      "Z" = cylinder$start_Z),
+    data.table::data.table(
+      "X" = cylinder$start_X + cylinder$length * cylinder$axis_X,
+      "Y" = cylinder$start_Y + cylinder$length * cylinder$axis_Y,
+      "Z" = cylinder$start_Z + cylinder$length * cylinder$axis_Z))
+
   # delete duplicates
   points <- unique(points)
 
   ### PART 2: vertical profiles
 
-  # I don't care about spreads
+  # I don't care about spreads (yet)
 
   ### PART 3: crown area & diameter
+
+  # prepare data
+  cylinder <- qsm@cylinder
 
   # get coordinates of convex hull
   chull_idx <- grDevices::chull(points[,c("X", "Y")])
@@ -180,17 +147,16 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
   chull_y <- points$Y[chull_idx]
 
   # get centroid of the polygon
-  conv_area <- 0.5 * sum(chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)])
-  center_X <- sum((chull_x[1:(chull_n - 1)] + chull_x[2:chull_n]) * (chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)]))/6/conv_area
-  center_Y <- sum((chull_y[1:(chull_n - 1)] + chull_y[2:chull_n]) * (chull_x[1:(chull_n - 1)]*chull_y[2:chull_n] - chull_x[2:chull_n]*chull_y[1:(chull_n - 1)]))/6/conv_area
+  chull_area <- polygon_area(chull_x, chull_y, chull_n)
+  chull_centroid <- polygon_centroid(chull_x, chull_y, chull_n, chull_area)
 
   # choosing method
   if (method == "TreeQSM") {
 
     # calculate vector from center to cylinder tips
     vec_to_tips <- data.table::data.table(
-      "vec_X" = (qsm@cylinder$start_X + qsm@cylinder$length * qsm@cylinder$axis_X) - center_X,
-      "vec_Y" = (qsm@cylinder$start_Y + qsm@cylinder$length * qsm@cylinder$axis_Y) - center_Y)
+      "vec_X" = (cylinder$start_X + cylinder$length * cylinder$axis_X) - chull_centroid$X,
+      "vec_Y" = (cylinder$start_Y + cylinder$length * cylinder$axis_Y) - chull_centroid$Y)
 
     # sort according to angle
     vec_to_tips$angle <- atan2(vec_to_tips$vec_Y, vec_to_tips$vec_X) + pi
@@ -206,12 +172,12 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
     for (section in 1:18) {
 
       # get length in one direction
-      idx_1 <- which(vec_to_tips$angle >= (section-1)*pi/18 & vec_to_tips$angle < section*pi/18)
-      len_1 <- ifelse(length(idx_1) > 0, max(vec_to_tips$angle[idx_1]), 0)
+      idx_1 <- which(vec_to_tips$angle >= (section - 1)*pi/18 & vec_to_tips$angle < section*pi/18)
+      len_1 <- ifelse(length(idx_1) > 0, max(vec_to_tips$length[idx_1]), 0)
 
       # get length in opposite direction
-      idx_2 <- which(vec_to_tips$angle >= ((section-1)*pi/18 + pi) & vec_to_tips$angle < (section*pi/18 + pi))
-      len_2 <- ifelse(length(idx_2) > 0, max(vec_to_tips$angle[idx_2]), 0)
+      idx_2 <- which(vec_to_tips$angle >= ((section - 1)*pi/18 + pi) & vec_to_tips$angle < (section*pi/18 + pi))
+      len_2 <- ifelse(length(idx_2) > 0, max(vec_to_tips$length[idx_2]), 0)
 
       # add crown width
       crown_widths <- c(crown_widths, len_1 + len_2)
@@ -223,138 +189,125 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
     # choosing method
   } else if (method == "qsm2r") {
 
+    # Pretzsch? Forest Dynamics, Growth and Yield?
     # derive average crown width from crown projection area
-    avg_crown_width <- 2 * sqrt(abs(conv_area) / pi)
+    avg_crown_width <- 2 * sqrt(abs(chull_area) / pi)
   }
 
   # calculate maximum spread in the data
   max_crown_width <- max(dist(cbind(chull_x, chull_y)))
 
-  # # derive alphahull
-  # alpha_value <- max(0.5, avg_crown_width/10)
-  # alpha_points <- unique(points[,c("X","Y")])
-  # alpha_shape <- alphahull::ashape(x = alpha_points$X, y = alpha_points$Y, alpha = alpha_value)
+  # derive points of alpha shape
+  alpha_value <- max(0.5, avg_crown_width/10)
+  alpha_points <- unique(round(points[,c("X","Y")],6))
+  alpha_shape <- alphahull::ashape(x = alpha_points$X, y = alpha_points$Y, alpha = alpha_value) # takes ages
+  alpha_idx <- c(alpha_shape$alpha.extremes, alpha_shape$alpha.extremes[1]) # points are unordered
 
-  #
-  #   %% Crown areas from convex hull and alpha shape:
-  #   treedata.CrownAreaConv = A;                                               # HERE
-  #   alp = max(0.5,treedata.CrownDiamAve/10);
-  #   shp = alphaShape(X(:,1),X(:,2),alp);
-  #   treedata.CrownAreaAlpha = shp.area;                                       # HERE
+  # derive area of alpha shape
+  # https://stackoverflow.com/questions/74054828/unordered-lines-to-closed-polygon
+  points_unsorted <- alpha_points[alpha_idx,]
+  points_unsorted$X <- points_unsorted$X - chull_centroid$X
+  points_unsorted$Y <- points_unsorted$Y - chull_centroid$Y
+  points_unsorted$angle <- atan2(points_unsorted$X, points_unsorted$Y)
+  points_unsorted <- unique(points_unsorted[order(points_unsorted$angle),])
+  alpha_x <- c(points_unsorted$X, points_unsorted$X[1])
+  alpha_y <- c(points_unsorted$Y, points_unsorted$Y[1])
+  alpha_n <- nrow(points_unsorted) + 1
+  alpha_area <- abs(polygon_area(alpha_x, alpha_y, alpha_n))
 
   ### PART 4: crown base, length, ratio & volume
 
-  #   %% Crown base
-  #   % Define first major branch as the branch whose diameter > min(0.05*dbh,5cm)
-  #   % and whose horizontal relative reach is more than the median reach of 1st-ord.
-  #   % branches (or at maximum 10). The reach is defined as the horizontal
-  #   % distance from the base to the tip divided by the dbh.
-  #   dbh = treedata.DBHcyl;
-  #   nb = length(branch.order);
-  #   HL = zeros(nb,1); % horizontal reach
-  #   branches1 = (1:1:nb)';
-  #   branches1 = branches1(branch.order == 1); % 1st-order branches
-  #   nb = length(branches1);
-  #   nc = size(Sta,1);
-  #   ind = (1:1:nc)';
-  #   for i = 1:nb
-  #     C = ind(cylinder.branch == branches1(i));
-  #     if ~isempty(C)
-  #       base = Sta(C(1),:);
-  #       C = C(end);
-  #       tip = Sta(C,:)+Len(C)*Axe(C);
-  #       V = tip(1:2)-base(1:2);
-  #       HL(branches1(i)) = sqrt(V*V')/dbh*2;
-  #     end
-  #   end
-  #   M = min(10,median(HL));
-  #
-  #   % Sort the branches according to the their heights
-  #   Hei = branch.height(branches1);
-  #   [Hei,SortOrd] = sort(Hei);
-  #   branches1 = branches1(SortOrd);
-  #
-  #   % Search the first/lowest branch:
-  #   d = min(0.05,0.05*dbh);
-  #   b = 0;
-  #   if nb > 1
-  #     i = 1;
-  #     while i < nb
-  #       i = i+1;
-  #       if branch.diameter(branches1(i)) > d && HL(branches1(i)) > M
-  #         b = branches1(i);
-  #         i = nb+2;
-  #       end
-  #     end
-  #     if i == nb+1 && nb > 1
-  #       b = branches1(1);
-  #     end
-  #   end
-  #
-  #   if b > 0
-  #     % search all the children of the first major branch:
-  #     nb = size(branch.parent,1);
-  #     Ind = (1:1:nb)';
-  #     chi = Ind(branch.parent == b);
-  #     B = b;
-  #     while ~isempty(chi)
-  #       B = [B; chi];
-  #       n = length(chi);
-  #       C = cell(n,1);
-  #       for i = 1:n
-  #         C{i} = Ind(branch.parent == chi(i));
-  #       end
-  #       chi = vertcat(C{:});
-  #     end
-  #
-  #     % define crown base height from the ground:
-  #     BaseHeight = max(Sta(:,3)); % Height of the crown base
-  #     for i = 1:length(B)
-  #       C = ind(cylinder.branch == B(i));
-  #       ht = min(Tip(C,3));
-  #       hb = min(Sta(C,3));
-  #       h = min(hb,ht);
-  #       if h < BaseHeight
-  #         BaseHeight = h;
-  #       end
-  #     end
-  #     treedata.CrownBaseHeight = BaseHeight-Sta(1,3);                         # HERE
-  #
-  #     %% Crown length and ratio
-  #     treedata.CrownLength = treedata.TreeHeight-treedata.CrownBaseHeight;    # HERE
-  #     treedata.CrownRatio = treedata.CrownLength/treedata.TreeHeight;         # HERE
-  #
-  #     %% Crown volume from convex hull and alpha shape:
-  #     I = P(:,3) >= BaseHeight;
-  #     X = P(I,:);
-  #     [K,V] = convhull(X(:,1),X(:,2),X(:,3));
-  #     treedata.CrownVolumeConv = V;                                           # HERE
-  #     alp = max(0.5,treedata.CrownDiamAve/5);
-  #     shp = alphaShape(X(:,1),X(:,2),X(:,3),alp,'HoleThreshold',10000);
-  #     treedata.CrownVolumeAlpha = shp.volume;                                 # HERE
-  #
-  #     else
-  #       % No branches
-  #       treedata.CrownBaseHeight = treedata.TreeHeight;                       # HERE
-  #       treedata.CrownLength = 0;                                             # HERE
-  #       treedata.CrownRatio = 0;                                              # HERE
-  #       treedata.CrownVolumeConv = 0;                                         # HERE
-  #       treedata.CrownVolumeAlpha = 0;                                        # HERE
-  #     end
-  #   end
+  # first major branch:
+  # - lowest branch whose diameter > min(0.05 * dbh, 5cm)
+  # - horizontal relative reach > median reach of 1st-ord.branches (or maximum 10)
 
-  ### PART 5: gathering new data
+  # prepare data
+  branch <- qsm@branch
+  cylinder <- qsm@cylinder
+
+  # get cylinder tips
+  cylinder$end_X <- cylinder$start_X + cylinder$length * cylinder$axis_X
+  cylinder$end_Y <- cylinder$start_Y + cylinder$length * cylinder$axis_Y
+  cylinder$end_Z <- cylinder$start_Z + cylinder$length * cylinder$axis_Z
+
+  # get first order branches
+  branch_1_id <- branch$bra_id[branch$order == 1] # IDs of first order branches
+  branch_1 <- branch[branch$order == 1,]
+  branch_1$rel_reach <- 0
+
+  # loop through first branches
+  for (bra_id in branch_1_id) {
+    cyl_sub <- cylinder[cylinder$branch == bra_id,]
+    if (nrow(cyl_sub) > 0) {
+
+      # calculate relative reach
+      first <- cyl_sub[1,]
+      last <- cyl_sub[nrow(cyl_sub),]
+      reach <- sqrt((first$start_X - last$end_X)**2 + (first$start_Y - last$end_Y)**2)
+      rel_reach <- reach / qsm@overview$DBHqsm * 2
+      branch_1$rel_reach[branch_1$bra_id == bra_id] <- rel_reach
+    }
+  }
+
+  # derive threshold
+  thresh_reach <- min(10, median(branch_1$rel_reach))
+  thresh_diam  <- min(0.05, 0.05 * qsm@overview$DBHqsm)
+
+  # find lowest branch meeting the demands (reach & diameter)
+  branch_1$thresh <- branch_1$diameter > thresh_diam & branch_1$rel_reach > thresh_reach
+  branch_1 <- branch_1[branch_1$thresh,]
+  branch_selected <- branch_1[which.min(branch_1$height),]
+
+  # there is a fitting branch
+  if (nrow(branch_selected) > 0) {
+
+    # get child cylinders of the selected branch
+    child_bra_id <- find_childs_recursive_branch(cylinder, branch_selected$bra_id, TRUE)
+    child_cyl <- cylinder[cylinder$branch %in% child_bra_id,] # B
+
+    # get crown base height
+    base_height <- min(child_cyl[,c("start_Z","end_Z")])
+    crown_base_height <- base_height -
+      cylinder$start_Z[cylinder$BranchOrder == 0 & cylinder$PositionInBranch == 1]
+
+    # get crown length and ratio
+    crown_length <- qsm@overview$TreeHeight - crown_base_height
+    crown_ratio  <- crown_length / qsm@overview$TreeHeight
+
+    # get points above the crown base
+    points_crown_base <- as.matrix(unique(points[points$Z >= base_height,]))
+
+    # crown volume from convex hull (3d)
+    chull_3d <- cxhull::cxhull(points_crown_base)
+    crown_volume_conv <- chull_3d$volume
+
+    # crown volume from alpha shape (3d)
+    alpha_value_3d <- max(0.5, avg_crown_width/5)
+    alpha_shape_3d <- alphashape3d::ashape3d(x = points_crown_base, alpha = alpha_value_3d) # TODO: prevent holes in the middle?
+    crown_volume_alpha <- alphashape3d::volume_ashape3d(alpha_shape_3d)
+
+  # there is no fitting branch
+  } else {
+    print("no crown")
+    crown_base_height <- overview$TreeHeight
+    crown_length <- 0
+    crown_ratio <- 0
+    crown_volume_conv <- 0
+    crown_volume_alpha <- 0
+  }
+
+  ### PART 5: updating data
 
   # overwrite old data
-  overview$CrownAreaConv    <- conv_area
+  overview$CrownAreaConv    <- abs(chull_area)
+  overview$CrownAreaAlpha   <- abs(alpha_area)
   overview$CrownDiamAve     <- avg_crown_width
   overview$CrownDiamMax     <- max_crown_width
-  overview$CrownAreaAlpha   <- NA
-  overview$CrownBaseHeight  <- NA
-  overview$CrownLength      <- NA
-  overview$CrownRatio       <- NA
-  overview$CrownVolumeConv  <- NA
-  overview$CrownVolumeAlpha <- NA
+  overview$CrownBaseHeight  <- crown_base_height
+  overview$CrownLength      <- crown_length
+  overview$CrownRatio       <- crown_ratio
+  overview$CrownVolumeConv  <- crown_volume_conv
+  overview$CrownVolumeAlpha <- crown_volume_alpha
 
   # overwrite old data
   qsm@overview <- overview
@@ -477,13 +430,14 @@ updateQSM <- function(qsm, method = "TreeQSM") {
   message("updating basic statistics ...")
   qsm <- updateQSM_basics(qsm)
 
-  # update crown statistics based on cylinder
-  message("updating crown statistics ...")
-  qsm <- updateQSM_crown(qsm, method)
-
   # update branch based on cylinder
   message("updating branch statistics ...")
   qsm <- updateQSM_branch(qsm)
+
+  # this function needs to be called last
+  # update crown statistics based on cylinder
+  message("updating crown statistics ...")
+  qsm <- updateQSM_crown(qsm, method)
 
   # return results
   return(qsm)
