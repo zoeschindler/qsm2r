@@ -286,8 +286,8 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
     alpha_shape_3d <- alphashape3d::ashape3d(x = points_crown_base, alpha = alpha_value_3d) # TODO: prevent holes in the middle?
     crown_volume_alpha <- alphashape3d::volume_ashape3d(alpha_shape_3d)
 
-  # there is no fitting branch
   } else {
+    # there is no fitting branch
     message("tree has no crown")
     crown_base_height <- overview$TreeHeight
     crown_length <- 0
@@ -424,6 +424,12 @@ updateQSM_branch <- function(qsm) {
 #'
 #' # update qsm
 #' updateQSM(qsm)
+#' @importFrom alphahull ashape
+#' @importFrom alphashape3d ashape3d
+#' @importFrom alphashape3d volume_ashape3d
+#' @importFrom R.matlab readMat
+#' @importFrom cxhull cxhull
+#' @export
 updateQSM <- function(qsm, method = "TreeQSM") {
 
   # update basic statistics based on cylinder

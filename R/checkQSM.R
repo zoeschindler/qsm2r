@@ -25,6 +25,7 @@
 #'
 #' # check qsm
 #' checkQSM(qsm)
+#' @export
 checkQSM <- function(qsm, precision = 2L) {
 
   if (!is(qsm, "QSM")) {

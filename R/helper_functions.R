@@ -137,6 +137,67 @@ random_orth_norm <- function(x, y, z) {
 
 ################################################################################
 
+summarize_branches <- function(qsm, n_class, diff_class, var_class, idx_all, idx_1st = NULL) {
+
+  # prepare storage
+  out <- c()
+
+  # loop through classes
+  for (n in 1:n_class) {
+
+    # get indices of subset
+    class_start <- (n - 1)*diff_class
+    class_end <- n*diff_class
+    idx_all_class <- var_class >= class_start & var_class < class_end & idx_all
+    idx_1st_class <- var_class >= class_start & var_class < class_end & idx_1st
+
+    # derive & save stats
+    curr <- data.table::data.table(
+      "volume_all_l" = sum(qsm@branch$volume[idx_all_class]), # in l
+      "volume_1st_l" = sum(qsm@branch$volume[idx_1st_class]), # in l
+      "area_all_m2" = sum(qsm@branch$area[idx_all_class]), # in m2
+      "area_1st_m2" = sum(qsm@branch$area[idx_1st_class]), # in m2
+      "length_all_m" = sum(qsm@branch$length[idx_all_class]), # in m
+      "length_1st_m" = sum(qsm@branch$length[idx_1st_class]), # in m
+      "count_all_branch" = nrow(qsm@branch[idx_all_class,]),
+      "count_1st_branch" = nrow(qsm@branch[idx_1st_class,]))
+    out <- rbind(out, curr)
+  }
+
+  # return results
+  return(out)
+}
+
+################################################################################
+
+summarize_cylinders <- function(qsm, n_class, diff_class, var_class) {
+
+  # prepare storage
+  out <- c()
+
+  # loop through classes
+  for (n in 1:n_class) {
+
+    # get indices of subset
+    class_start <- (n - 1)*diff_class
+    class_end <- n*diff_class
+    idx <- var_class >= class_start & var_class < class_end
+
+    # derive & save stats
+    curr <- data.table::data.table(
+      "volume_l" = 1000*sum(pi*qsm@cylinder$length[idx]*qsm@cylinder$radius[idx]**2),
+      "area_m2" = sum(2*pi*qsm@cylinder$radius[idx]*qsm@cylinder$length[idx]),
+      "length_m" = sum(qsm@cylinder$length[idx]),
+      "count_cylinder" = nrow(qsm@cylinder[idx,]))
+    out <- rbind(out, curr)
+  }
+
+  # return results
+  return(out)
+}
+
+################################################################################
+
 # create unit vector orthogonal to two other unit vectors
 two_vector_orth_norm <- function(x1, y1, z1, x2, y2, z2) {
 

@@ -2,8 +2,10 @@
 # CLASS DEFINITION
 ################################################################################
 
+#' @import data.table
+#' @export
 setClass(
-  "QSM",
+  Class = "QSM",
   slots = list(
     name = "character",
     cylinder = "data.table",
@@ -38,17 +40,19 @@ setMethod(
     cat("name:        ", object@name, "\n")
     cat("DBH:         ", round(object@overview$DBHcyl * 100), "cm\n")
     cat("height:      ", round(object@overview$TreeHeight, 2), "m\n")
-    cat("cylinders    ", "\n")
-    cat("  - count:   ", nrow(object@cylinder), "\n")
-    cat("  - length:  ", round(object@overview$TotalLength, 2), "m\n")
-    cat("  - area:    ", round(object@overview$TotalArea, 2), "m^2\n")
-    cat("  - volume:  ", round(object@overview$TotalVolume / 1000, 2), "m^3\n")
+    cat("cylinder     ", "\n")
+    cat(" - count:    ", nrow(object@cylinder), "\n")
+    cat(" - length:   ", round(object@overview$TotalLength, 2), "m\n")
+    cat(" - area:     ", round(object@overview$TotalArea, 2), "m^2\n")
+    cat(" - volume:   ", round(object@overview$TotalVolume / 1000, 2), "m^3\n")
     return(invisible(object))
   }
 )
 
 ################################################################################
 
+#' @import rgl
+#' @export
 setMethod(
   "plot",
   "QSM",

@@ -25,6 +25,9 @@
 #'
 #' # inspect qsm
 #' print(qsm)
+#' @import data.table
+#' @import R.matlab
+#' @export
 readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
 
   # data_in: path to a matlab file containing the qsm or the read in matlab file
