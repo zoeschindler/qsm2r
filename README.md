@@ -2,7 +2,7 @@
 
 ## Description <img src="https://github.com/zoeschindler/qsm2r/blob/main/inst/figures/logo.png" align="right" width = 280/>
 
-`qsm2r` is an R package to read in and analyze QSMs (quantitative structure models) created in Matlab using <a href = "https://github.com/InverseTampere/TreeQSM">TreeQSM</a>.
+`qsm2r` is an R package to read in and analyze QSMs (quantitative structure models) created in Matlab using <a href = "https://github.com/InverseTampere/TreeQSM">TreeQSM</a>. QSMs stored in `*.mat` files can be read in using `readQSM()`. After changing the cylinder structure of QSMs, the `updateQSM()` function can be used to update the remaining data in the QSMs (e.g. branch data, crown statistics, ...) based on the edited data. Various summaries of the cylinder and branch data can be derived using a set of `summary_cylinder_*()` and `summary_branch_*()` functions.
 
 ## Installation from source
 
