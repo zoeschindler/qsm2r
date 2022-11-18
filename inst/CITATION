@@ -3,7 +3,7 @@ citHeader("To cite qsm2r in publications use:")
 citEntry(
   entry    = "misc",
   title    = "qsm2r: Import and analyze QSMs from TreeQSM in R",
-  author   = "Zoe Schindler",
+  author   = person(given = "Zoe", family = "Schindler", comment = c("orcid" = "0000-0003-2972-1920")),
   year     = "2022",
   url      = "https://github.com/zoeschindler/qsm2r",
   textVersion = paste(
