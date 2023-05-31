@@ -57,7 +57,7 @@ setMethod(
   "plot",
   "QSM",
   function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
-           bg = "#22272E", window = c(500,500), sides = 6) {
+           bg = "#22272E", window = c(500,500), sides = 6, lit = FALSE) {
 
     # col:        single color to use for all cylinders
     # col_var:    which variable to use for coloring (e.g. branch, BranchOrder)
@@ -122,7 +122,7 @@ setMethod(
     rgl::open3d()
     rgl::par3d(windowRect = c(50, 50, window[1] + 50, window[2] + 50))
     rgl::bg3d(bg)
-    rgl::shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = FALSE)
+    rgl::shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = lit)
   }
 )
 
