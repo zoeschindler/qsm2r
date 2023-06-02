@@ -51,20 +51,50 @@ setMethod(
 
 ################################################################################
 
-#' @import rgl
+#' Plot a QSM object
+#'
+#' @description
+#' Displays a 3D \code{rgl} plot of a \code{QSM} object. Can be manipulated
+#' using the package \code{rgl}.
+#'
+#' @param x An object of class \code{QSM}.
+#' @param y Not used.
+#' @param col \code{character}, color used for coloring the whole
+#' \code{QSM} in a single color, if trying to color according to a variable,
+#' leave it empty.
+#' @param col_var \code{character}, column name of the cylinder data that should
+#' be used for coloring.
+#' @param pal \code{function}, color palette used for coloring.
+#' @param sides \code{integer}, number of sides in the polygon cross section.
+#' @param lit \code{boolean}, whether the scene should be with or without light.
+#' @param center  \code{boolean}, whether all cylinders should be centered at
+#' the stem base.
+#'
+#' @return
+#' \code{rgl} plot of a QSM.
+#'
+#' @seealso \code{\link{readQSM}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # plot qsm
+#' plot(qsm, col = "salmon4")
+#' plot(qsm, col_var = "PositionInBranch")
 #' @export
+#' @import rgl
+#' @method plot QSM
+setGeneric("plot", function(x, y, ...)
+  standardGeneric("plot"))
+
+#' @rdname plot
 setMethod(
   "plot",
-  "QSM",
-  function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
+  signature(x = "QSM", y = "missing"),
+  function(x, y, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
            sides = 6, lit = FALSE, center = TRUE) {
-
-    # col:        single color to use for all cylinders
-    # col_var:    which variable to use for coloring (e.g. branch, BranchOrder)
-    # pal:        color palette to use (function)
-    # sides:      number of sides of each cylinder
-    # lit:        scence with or without light
-    # center:     recenter qsm to stembase
 
     # extract relevant data
     qsm <- x
@@ -75,7 +105,7 @@ setMethod(
     } else {
       stop("input must be from class 'QSM'")
     }
-    
+
     # center cylinders
     if (center) {
       cylinder$start_X = cylinder$start_X - cylinder$start_X[1]
