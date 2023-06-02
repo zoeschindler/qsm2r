@@ -57,14 +57,14 @@ setMethod(
   "plot",
   "QSM",
   function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
-           bg = "#22272E", window = c(500,500), sides = 6, lit = FALSE, center = TRUE) {
+           sides = 6, lit = FALSE, center = TRUE) {
 
     # col:        single color to use for all cylinders
     # col_var:    which variable to use for coloring (e.g. branch, BranchOrder)
     # pal:        color palette to use (function)
-    # bg:         background color
-    # window:     initial window size
     # sides:      number of sides of each cylinder
+    # lit:        scence with or without light
+    # center:     recenter qsm to stembase
 
     # extract relevant data
     qsm <- x
@@ -127,8 +127,6 @@ setMethod(
 
     # plot cylinders
     rgl::open3d()
-    rgl::par3d(windowRect = c(50, 50, window[1] + 50, window[2] + 50))
-    rgl::bg3d(bg)
     rgl::shade3d(shapelist3d(cylinder_list, plot = FALSE), lit = lit)
   }
 )
