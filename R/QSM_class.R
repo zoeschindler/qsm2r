@@ -57,7 +57,7 @@ setMethod(
   "plot",
   "QSM",
   function(x, y = NULL, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
-           bg = "#22272E", window = c(500,500), sides = 6, lit = FALSE) {
+           bg = "#22272E", window = c(500,500), sides = 6, lit = FALSE, center = TRUE) {
 
     # col:        single color to use for all cylinders
     # col_var:    which variable to use for coloring (e.g. branch, BranchOrder)
@@ -74,6 +74,13 @@ setMethod(
       cylinder <- qsm@cylinder
     } else {
       stop("input must be from class 'QSM'")
+    }
+    
+    # center cylinders
+    if (center) {
+      cylinder$start_X = cylinder$start_X - cylinder$start_X[1]
+      cylinder$start_Y = cylinder$start_Y - cylinder$start_Y[1]
+      cylinder$start_Z = cylinder$start_Z - cylinder$start_Z[1]
     }
 
     # calculate end points of cylinders
