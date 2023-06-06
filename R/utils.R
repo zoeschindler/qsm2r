@@ -2,12 +2,93 @@
 # HELPER FUNCTIONS
 ################################################################################
 
-find_childs_recursive_branch <- function(cylinder, bra_IDs, include_self = TRUE) {
-  # get cylinders to start with
-  cyl_sub <- cylinder[cylinder$branch %in% bra_IDs,]
+#' Get location of the stem base
+#'
+#' @description
+#' \code{get_location} obtains the location of the stem base.
+#'
+#' @param qsm An object of class \code{QSM}.
+#'
+#' @return
+#' A list containing the \code{xyz}-coordinates of the stem base.
+#'
+#' @seealso \code{\link{set_location}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # get stem base location
+#' stem_base <- get_location(qsm)
+#' @export
+get_location <- function(qsm) {
+
+  # get starting coordinates of stem base
+  base_id <- qsm@cylinder$cyl_id[qsm@cylinder$BranchOrder == 0 & qsm@cylinder$PositionInBranch == 1]
+  location <- list(
+    "x" = qsm@cylinder$start_X[qsm@cylinder$cyl_id == base_id],
+    "y" = qsm@cylinder$start_Y[qsm@cylinder$cyl_id == base_id],
+    "z" = qsm@cylinder$start_Z[qsm@cylinder$cyl_id == base_id])
+
+  # show results
+  cat("x:", round(location[["x"]], 2), "\n")
+  cat("y:", round(location[["y"]], 2), "\n")
+  cat("z:", round(location[["z"]], 2), "\n")
+
+  # return results
+  return(invisible(location))
+}
+
+################################################################################
+
+#' Set location of the stem base
+#'
+#' @description
+#' \code{set_location} changes the location of the QSM so that \code{location}
+#' is moved to the point \code{(0|0|0)}.
+#'
+#' @param qsm An object of class \code{QSM}.
+#' @param location Coordinates of a point which is supposed to be moved to
+#' \code{(0|0|0)}. A list or a data.frame with items or columns \code{xyz}.
+#'
+#' @return
+#' An object of class \code{QSM}.
+#'
+#' @seealso \code{\link{get_location}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # get stem base location
+#' stem_base <- get_location(qsm)
+#'
+#' # shift stem base to (0|0|0)
+#' qsm <- set_location(qsm, stem_base)
+#' @export
+set_location <- function(qsm, location) {
+
+  # recenter cylinders from location to (0|0|0)
+  qsm@cylinder$start_X <- qsm@cylinder$start_X - location$x
+  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - location$y
+  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - location$z
+
+  # return results
+  return(qsm)
+}
+
+################################################################################
+
+# get branch IDs if child branches
+find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRUE) {
+
+  # get cylinders of the branches
+  cyl_sub <- cylinder[cylinder$branch %in% branch_ID,]
 
   # get all cylinders which are children of the branches
-  cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id & !(cylinder$branch %in% bra_IDs),]
+  cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$ID & !(cylinder$branch %in% branch_ID),]
 
   # return the branch IDs of the children
   if (nrow(cyl_childs) == 0) {
@@ -16,7 +97,7 @@ find_childs_recursive_branch <- function(cylinder, bra_IDs, include_self = TRUE)
     id_childs <- unique(cyl_childs$branch)
     id_childs_childs <- find_childs_recursive_branch(cylinder, id_childs)
     if (include_self) {
-      return(c(bra_IDs, id_childs, id_childs_childs))
+      return(c(branch_ID, id_childs, id_childs_childs))
     } else {
       return(c(id_childs, id_childs_childs))
     }
@@ -133,67 +214,6 @@ random_orth_norm <- function(x, y, z) {
 
   # return result
   return(orth_vec)
-}
-
-################################################################################
-
-summarize_branches <- function(qsm, n_class, diff_class, var_class, idx_all, idx_1st = NULL) {
-
-  # prepare storage
-  out <- c()
-
-  # loop through classes
-  for (n in 1:n_class) {
-
-    # get indices of subset
-    class_start <- (n - 1)*diff_class
-    class_end <- n*diff_class
-    idx_all_class <- var_class >= class_start & var_class < class_end & idx_all
-    idx_1st_class <- var_class >= class_start & var_class < class_end & idx_1st
-
-    # derive & save stats
-    curr <- data.table::data.table(
-      "volume_all_l" = sum(qsm@branch$volume[idx_all_class]), # in l
-      "volume_1st_l" = sum(qsm@branch$volume[idx_1st_class]), # in l
-      "area_all_m2" = sum(qsm@branch$area[idx_all_class]), # in m2
-      "area_1st_m2" = sum(qsm@branch$area[idx_1st_class]), # in m2
-      "length_all_m" = sum(qsm@branch$length[idx_all_class]), # in m
-      "length_1st_m" = sum(qsm@branch$length[idx_1st_class]), # in m
-      "count_all_branch" = nrow(qsm@branch[idx_all_class,]),
-      "count_1st_branch" = nrow(qsm@branch[idx_1st_class,]))
-    out <- rbind(out, curr)
-  }
-
-  # return results
-  return(out)
-}
-
-################################################################################
-
-summarize_cylinders <- function(qsm, n_class, diff_class, var_class) {
-
-  # prepare storage
-  out <- c()
-
-  # loop through classes
-  for (n in 1:n_class) {
-
-    # get indices of subset
-    class_start <- (n - 1)*diff_class
-    class_end <- n*diff_class
-    idx <- var_class >= class_start & var_class < class_end
-
-    # derive & save stats
-    curr <- data.table::data.table(
-      "volume_l" = 1000*sum(pi*qsm@cylinder$length[idx]*qsm@cylinder$radius[idx]**2),
-      "area_m2" = sum(2*pi*qsm@cylinder$radius[idx]*qsm@cylinder$length[idx]),
-      "length_m" = sum(qsm@cylinder$length[idx]),
-      "count_cylinder" = nrow(qsm@cylinder[idx,]))
-    out <- rbind(out, curr)
-  }
-
-  # return results
-  return(out)
 }
 
 ################################################################################
