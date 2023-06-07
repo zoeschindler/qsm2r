@@ -2,18 +2,24 @@
 % Please edit documentation in R/pruning.R
 \name{pruning_branches}
 \alias{pruning_branches}
-\title{todo}
+\title{Pruning according to branch ID}
 \usage{
 pruning_branches(qsm, branch_id, remove = FALSE)
 }
 \arguments{
-\item{todo}{\code{todo}, todo.}
+\item{qsm}{An object of class \code{QSM}.}
+
+\item{branch_id}{\code{integer}, branch IDs of to be pruned branches.}
+
+\item{remove}{\code{boolean}, whether the to be pruned cylinders should be
+removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{todo}, todo.
+\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 }
 \description{
-\code{todo} todo.
+\code{pruning_branches} prunes the tree at the specified branches and also
+removes subsequent branches.
 }
 \examples{
 # load qsm
@@ -33,5 +39,5 @@ removed <- pruning_branches(qsm, branch_id = c(3,111,333), remove = TRUE)
 plot(removed)
 }
 \seealso{
-\code{\link{todo}}
+\code{\link{pruning_cylinders}}
 }

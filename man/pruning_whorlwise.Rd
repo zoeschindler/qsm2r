@@ -2,18 +2,28 @@
 % Please edit documentation in R/pruning.R
 \name{pruning_whorlwise}
 \alias{pruning_whorlwise}
-\title{todo}
+\title{Whorlwise pruning to a specified number of whorls}
 \usage{
 pruning_whorlwise(qsm, whorl_m = 0.3, remaining_whorls = 5, remove = FALSE)
 }
 \arguments{
-\item{todo}{\code{todo}, todo.}
+\item{qsm}{An object of class \code{QSM}.}
+
+\item{whorl_m}{\code{numeric}, maximum whorl stem interval in meters.}
+
+\item{remaining_whorls}{\code{integer}, number of whorls that should remain
+at the top of the crown.}
+
+\item{remove}{\code{boolean}, whether the to be pruned cylinders should be
+removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{todo}, todo.
+\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 }
 \description{
-\code{todo} todo.
+\code{pruning_whorlwise} prunes all first order and their subsequent
+branches belonging to whorls below a specified number of whorls. Whorls are
+determined automatically.
 }
 \examples{
 # load qsm
@@ -31,7 +41,14 @@ removed <- pruning_whorlwise(qsm, whorl_m = 0.3, remaining_whorls = 5, remove = 
 
 # plot qsm
 plot(removed)
+
+}
+\references{
+Springmann, S., Rogers, R., & Spiecker, H. (2011). Impact of artificial
+pruning on growth and secondary shoot development of wild cherry
+(\emph{Prunus avium} L.). Forest Ecology and Management, 261(3), 764-769.
+doi: \href{https://doi.org/10.1016/j.foreco.2010.12.007}{10.1016/j.foreco.2010.12.007}
 }
 \seealso{
-\code{\link{todo}}
+\code{\link{pruning_conventional}}, \code{\link{pruning_selective}}
 }

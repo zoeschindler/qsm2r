@@ -2,7 +2,7 @@
 % Please edit documentation in R/pruning.R
 \name{pruning_conventional}
 \alias{pruning_conventional}
-\title{todo}
+\title{Conventional pruning at specified height or stem length}
 \usage{
 pruning_conventional(
   qsm,
@@ -12,13 +12,23 @@ pruning_conventional(
 )
 }
 \arguments{
-\item{todo}{\code{todo}, todo.}
+\item{qsm}{An object of class \code{QSM}.}
+
+\item{threshold_m}{\code{numeric}, tree height or stem length in meters below
+which all first order branches should be removed.}
+
+\item{method}{\code{character}, whether the threshold refers to tree height
+(\code{"height"}) or stem length (\code{"length"}).}
+
+\item{remove}{\code{boolean}, whether the to be pruned cylinders should be
+removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{todo}, todo.
+\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 }
 \description{
-\code{todo} todo.
+\code{pruning_conventional} prunes all first order and their subsequent
+branches below the specified tree height or stem length.
 }
 \examples{
 # load qsm
@@ -38,5 +48,5 @@ removed <- pruning_conventional(qsm, threshold_m = 3, method = "length", remove 
 plot(removed)
 }
 \seealso{
-\code{\link{todo}}
+\code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}}
 }

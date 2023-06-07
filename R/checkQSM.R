@@ -75,7 +75,7 @@ checkQSM <- function(qsm, precision = 2L) {
   if (fine) {
     message("everything seems to be fine\n")
   } else {
-    message("please use 'updateQSM()' to update the QSM")
+    message("please use 'updateQSM()' to update the QSM\n")
   }
 
   # return result

@@ -2,18 +2,29 @@
 % Please edit documentation in R/pruning.R
 \name{pruning_selective}
 \alias{pruning_selective}
-\title{todo}
+\title{Selective pruning according to specified branch diameter and angle}
 \usage{
 pruning_selective(qsm, diameter_m = 0.03, angle_deg = 40, remove = FALSE)
 }
 \arguments{
-\item{todo}{\code{todo}, todo.}
+\item{qsm}{An object of class \code{QSM}.}
+
+\item{diameter_m}{\code{numeric}, branch diameter in meters above which all
+first order branches should be removed.}
+
+\item{angle_deg}{\code{numeric}, angle between stem and branches in degree
+below which all first order branches should be removed.}
+
+\item{remove}{\code{boolean}, whether the to be pruned cylinders should be
+removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{todo}, todo.
+\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 }
 \description{
-\code{todo} todo.
+\code{pruning_selective} prunes all first order and their subsequent
+branches which have a larger starting diameter or a smaller branch angle than
+specified.
 }
 \examples{
 # load qsm
@@ -40,5 +51,5 @@ pruning on growth and secondary shoot development of wild cherry
 doi: \href{https://doi.org/10.1016/j.foreco.2010.12.007}{10.1016/j.foreco.2010.12.007}
 }
 \seealso{
-\code{\link{todo}}
+\code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}}
 }

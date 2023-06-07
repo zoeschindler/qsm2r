@@ -20,17 +20,21 @@ pruning_remove <- function(qsm, cylinder, remove = TRUE) {
 # MAIN FUNCTIONS
 ################################################################################
 
-#' todo
+#' Pruning according to cylinder ID
 #'
 #' @description
-#' \code{todo} todo.
+#' \code{pruning_cylinders} prunes the tree at the specified cylinders and also
+#' removes subsequent cylinders.
 #'
-#' @param todo \code{todo}, todo.
+#' @param qsm An object of class \code{QSM}.
+#' @param cyl_id \code{integer}, cylinder IDs at which the tree should be pruned.
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{todo}, todo.
+#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 #'
-#' @seealso \code{\link{todo}}
+#' @seealso \code{\link{pruning_branches}}
 #'
 #' @examples
 #' # load qsm
@@ -70,17 +74,21 @@ pruning_cylinders <- function(qsm, cyl_id, remove = FALSE) {
 
 ################################################################################
 
-#' todo
+#' Pruning according to branch ID
 #'
 #' @description
-#' \code{todo} todo.
+#' \code{pruning_branches} prunes the tree at the specified branches and also
+#' removes subsequent branches.
 #'
-#' @param todo \code{todo}, todo.
+#' @param qsm An object of class \code{QSM}.
+#' @param branch_id \code{integer}, branch IDs of to be pruned branches.
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{todo}, todo.
+#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 #'
-#' @seealso \code{\link{todo}}
+#' @seealso \code{\link{pruning_cylinders}}
 #'
 #' @examples
 #' # load qsm
@@ -120,17 +128,24 @@ pruning_branches <- function(qsm, branch_id, remove = FALSE) {
 
 ################################################################################
 
-#' todo
+#' Conventional pruning at specified height or stem length
 #'
 #' @description
-#' \code{todo} todo.
+#' \code{pruning_conventional} prunes all first order and their subsequent
+#' branches below the specified tree height or stem length.
 #'
-#' @param todo \code{todo}, todo.
+#' @param qsm An object of class \code{QSM}.
+#' @param threshold_m \code{numeric}, tree height or stem length in meters below
+#' which all first order branches should be removed.
+#' @param method \code{character}, whether the threshold refers to tree height
+#' (\code{"height"}) or stem length (\code{"length"}).
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{todo}, todo.
+#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 #'
-#' @seealso \code{\link{todo}}
+#' @seealso \code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}}
 #'
 #' @examples
 #' # load qsm
@@ -193,17 +208,25 @@ pruning_conventional <- function(qsm, threshold_m = 3, method = c("length", "hei
 
 ################################################################################
 
-#' todo
+#' Selective pruning according to specified branch diameter and angle
 #'
 #' @description
-#' \code{todo} todo.
+#' \code{pruning_selective} prunes all first order and their subsequent
+#' branches which have a larger starting diameter or a smaller branch angle than
+#' specified.
 #'
-#' @param todo \code{todo}, todo.
+#' @param qsm An object of class \code{QSM}.
+#' @param diameter_m \code{numeric}, branch diameter in meters above which all
+#' first order branches should be removed.
+#' @param angle_deg \code{numeric}, angle between stem and branches in degree
+#' below which all first order branches should be removed.
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{todo}, todo.
+#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 #'
-#' @seealso \code{\link{todo}}
+#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}}
 #'
 #' @examples
 #' # load qsm
@@ -251,17 +274,24 @@ pruning_selective <- function(qsm, diameter_m = 0.03, angle_deg = 40, remove = F
 
 ################################################################################
 
-#' todo
+#' Whorlwise pruning to a specified number of whorls
 #'
 #' @description
-#' \code{todo} todo.
+#' \code{pruning_whorlwise} prunes all first order and their subsequent
+#' branches belonging to whorls below a specified number of whorls. Whorls are
+#' determined automatically.
 #'
-#' @param todo \code{todo}, todo.
+#' @param qsm An object of class \code{QSM}.
+#' @param whorl_m \code{numeric}, maximum whorl stem interval in meters.
+#' @param remaining_whorls \code{integer}, number of whorls that should remain
+#' at the top of the crown.
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{todo}, todo.
+#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
 #'
-#' @seealso \code{\link{todo}}
+#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_selective}}
 #'
 #' @examples
 #' # load qsm
@@ -279,6 +309,13 @@ pruning_selective <- function(qsm, diameter_m = 0.03, angle_deg = 40, remove = F
 #'
 #' # plot qsm
 #' plot(removed)
+#'
+#' @references
+#' Springmann, S., Rogers, R., & Spiecker, H. (2011). Impact of artificial
+#' pruning on growth and secondary shoot development of wild cherry
+#' (\emph{Prunus avium} L.). Forest Ecology and Management, 261(3), 764-769.
+#' doi: \href{https://doi.org/10.1016/j.foreco.2010.12.007}{10.1016/j.foreco.2010.12.007}
+#'
 #' @export
 pruning_whorlwise <- function(qsm, whorl_m = 0.3, remaining_whorls = 5, remove = FALSE) {
 
