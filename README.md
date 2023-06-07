@@ -23,14 +23,26 @@ qsm <- readQSM(file_path)
 # get summary
 print(qsm)
 
+# show qsm
+plot(qsm)
+
+# pruning
+qsm <- pruning_conventional(qsm, threshold_m = 3, method = "height", remove = TRUE)
+
+# show pruned qsm
+plot(qsm)
+
 # check if branch & overview are up-to-date with cylinder
 checkQSM(qsm)
 
 # update branch & overview from cylinder
-updateQSM(qsm)
+qsm <- updateQSM(qsm)
 
-# plot qsm
-plot(qsm)
+# check if branch & overview are up-to-date with cylinder
+checkQSM(qsm)
+
+# get summary
+print(qsm)
 ```
 
 ## About

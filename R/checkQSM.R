@@ -43,7 +43,7 @@ checkQSM <- function(qsm, precision = 2L) {
   empty_cylinder <- nrow(qsm@cylinder) == 0
 
   # check branch id and branch order
-  same_branch_id <- all(sort(unique(qsm@cylinder$branch)) == (1:nrow(qsm@branch)))
+  same_branch_id <- all(sort(unique(qsm@cylinder$branch)) == sort(qsm@branch$bra_id))
   same_branch_order <- all(sort(unique(qsm@cylinder$BranchOrder)) == sort(unique(qsm@branch$order)))
 
   # check basic stats
