@@ -12,7 +12,7 @@ plot(x, y, ...)
   y,
   col = NULL,
   col_var = "BranchOrder",
-  pal = grDevices::rainbow,
+  pal = color_pal_qsm(),
   sides = 6,
   lit = FALSE,
   center = TRUE

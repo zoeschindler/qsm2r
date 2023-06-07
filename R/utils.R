@@ -2,6 +2,27 @@
 # HELPER FUNCTIONS
 ################################################################################
 
+# color palette
+color_pal_qsm <- function() {
+  return(colorRampPalette(c("violetred4", "hotpink3", "lightpink3", "lightpink")))
+}
+
+################################################################################
+
+# convert radians to degrees
+rad2deg <- function(rad) {
+  return(rad * 180 / pi)
+}
+
+################################################################################
+
+# convert degrees to radians
+deg2rad <- function(deg) {
+  return(deg * pi / 180)
+}
+
+################################################################################
+
 #' Get location of the stem base
 #'
 #' @description
@@ -88,11 +109,15 @@ find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRU
   cyl_sub <- cylinder[cylinder$branch %in% branch_ID,]
 
   # get all cylinders which are children of the branches
-  cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$ID & !(cylinder$branch %in% branch_ID),]
+  cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id & !(cylinder$branch %in% branch_ID),]
 
   # return the branch IDs of the children
   if (nrow(cyl_childs) == 0) {
-    return(NULL)
+    if (include_self) {
+      return(branch_ID)
+    } else {
+      return(self)
+    }
   } else {
     id_childs <- unique(cyl_childs$branch)
     id_childs_childs <- find_childs_recursive_branch(cylinder, id_childs)
@@ -240,6 +265,52 @@ two_vector_orth_norm <- function(x1, y1, z1, x2, y2, z2) {
 
   # return result
   return(orth_vec)
+}
+
+################################################################################
+
+value_cluster <- function(values, threshold) {
+
+  # initialize clusters
+  values <- sort(values)
+  clusters <- list(values[1])
+  curr_cluster  <- 1
+
+  # go through values
+  for (idx in 2:length(values)) {
+
+    # calculate distance to previous value
+    d_previous <- values[idx] - values[idx - 1]
+
+    # calculate distance to first value of current cluster
+    d_first_clust <- values[idx] - clusters[[curr_cluster]][1]
+
+    # check values & clusters
+    if (d_previous <= threshold & d_first_clust <= threshold) {
+      # clearly belongs to previous cluster
+      clusters[[curr_cluster]] <- c(clusters[[curr_cluster]], values[idx])
+
+    } else if (d_previous > threshold & d_first_clust > threshold) {
+      # clearly belongs to next cluster
+      curr_cluster <- curr_cluster + 1
+      clusters <- append(clusters, values[idx])
+
+    } else if (d_previous <= 0.3 & d_first_clust > threshold) {
+      curr_cluster <- curr_cluster + 1
+      clusters <- append(clusters, values[idx])
+
+      # check whether previous value belongs better to new cluster
+      d_previous_old <- values[idx - 1] - values[idx - 2]
+      d_previous_new <- values[idx] - values[idx - 1]
+      if (d_previous_old > d_previous_new) {
+        clusters[[curr_cluster - 1]] <- clusters[[curr_cluster - 1]][-length(clusters[[curr_cluster - 1]])]
+        clusters[[curr_cluster]] <- c(values[idx - 1], clusters[[curr_cluster]])
+      }
+    }
+  }
+
+  # return result
+  return(clusters)
 }
 
 ################################################################################

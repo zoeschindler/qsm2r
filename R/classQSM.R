@@ -93,7 +93,7 @@ setGeneric("plot", function(x, y, ...)
 setMethod(
   "plot",
   signature(x = "QSM", y = "missing"),
-  function(x, y, col = NULL, col_var = "BranchOrder", pal = grDevices::rainbow,
+  function(x, y, col = NULL, col_var = "BranchOrder", pal = color_pal_qsm(),
            sides = 6, lit = FALSE, center = TRUE) {
 
     # extract relevant data
