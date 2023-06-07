@@ -15,7 +15,7 @@ pruning_branches(qsm, branch_id, remove = FALSE)
 removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+\code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 }
 \description{
 \code{pruning_branches} prunes the tree at the specified branches and also
@@ -27,13 +27,13 @@ file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 qsm <- readQSM(file_path)
 
 # prune specified branches, without removing
-not_removed <- pruning_branches(qsm, branch_id = c(5,33), remove = FALSE)
+not_removed <- pruning_branches(qsm, branch_id = c(6,9), remove = FALSE)
 
 # plot qsm
 plot(not_removed, col_var = "prune")
 
 # prune specified branches, with removing
-removed <- pruning_branches(qsm, branch_id = c(3,111,333), remove = TRUE)
+removed <- pruning_branches(qsm, branch_id = c(6,9), remove = TRUE)
 
 # plot qsm
 plot(removed)

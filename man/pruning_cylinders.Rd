@@ -15,7 +15,7 @@ pruning_cylinders(qsm, cyl_id, remove = FALSE)
 removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+\code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 }
 \description{
 \code{pruning_cylinders} prunes the tree at the specified cylinders and also

@@ -32,7 +32,7 @@ pruning_remove <- function(qsm, cylinder, remove = TRUE) {
 #' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
 #' @seealso \code{\link{pruning_branches}}
 #'
@@ -86,7 +86,7 @@ pruning_cylinders <- function(qsm, cyl_id, remove = FALSE) {
 #' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
 #' @seealso \code{\link{pruning_cylinders}}
 #'
@@ -96,13 +96,13 @@ pruning_cylinders <- function(qsm, cyl_id, remove = FALSE) {
 #' qsm <- readQSM(file_path)
 #'
 #' # prune specified branches, without removing
-#' not_removed <- pruning_branches(qsm, branch_id = c(5,33), remove = FALSE)
+#' not_removed <- pruning_branches(qsm, branch_id = c(6,9), remove = FALSE)
 #'
 #' # plot qsm
 #' plot(not_removed, col_var = "prune")
 #'
 #' # prune specified branches, with removing
-#' removed <- pruning_branches(qsm, branch_id = c(3,111,333), remove = TRUE)
+#' removed <- pruning_branches(qsm, branch_id = c(6,9), remove = TRUE)
 #'
 #' # plot qsm
 #' plot(removed)
@@ -143,7 +143,7 @@ pruning_branches <- function(qsm, branch_id, remove = FALSE) {
 #' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
 #' @seealso \code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}}
 #'
@@ -224,7 +224,7 @@ pruning_conventional <- function(qsm, threshold_m = 3, method = c("length", "hei
 #' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
 #' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}}
 #'
@@ -279,7 +279,8 @@ pruning_selective <- function(qsm, diameter_m = 0.03, angle_deg = 40, remove = F
 #' @description
 #' \code{pruning_whorlwise} prunes all first order and their subsequent
 #' branches belonging to whorls below a specified number of whorls. Whorls are
-#' determined automatically.
+#' determined automatically. Single branches without other branches nearby are
+#' counted as a single whorl as well.
 #'
 #' @param qsm An object of class \code{QSM}.
 #' @param whorl_m \code{numeric}, maximum whorl stem interval in meters.
@@ -289,7 +290,7 @@ pruning_selective <- function(qsm, diameter_m = 0.03, angle_deg = 40, remove = F
 #' removed (\code{TRUE}) or labelled (\code{FALSE}).
 #'
 #' @return
-#' \code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
 #' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_selective}}
 #'

@@ -24,7 +24,7 @@ which all first order branches should be removed.}
 removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+\code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 }
 \description{
 \code{pruning_conventional} prunes all first order and their subsequent

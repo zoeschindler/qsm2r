@@ -18,12 +18,13 @@ at the top of the crown.}
 removed (\code{TRUE}) or labelled (\code{FALSE}).}
 }
 \value{
-\code{QSM}, with removed or labelled cylinders (column \code{"prune"}).
+\code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 }
 \description{
 \code{pruning_whorlwise} prunes all first order and their subsequent
 branches belonging to whorls below a specified number of whorls. Whorls are
-determined automatically.
+determined automatically. Single branches without other branches nearby are
+counted as a single whorl as well.
 }
 \examples{
 # load qsm
