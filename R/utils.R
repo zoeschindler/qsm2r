@@ -104,19 +104,19 @@ set_location <- function(qsm, location) {
 
 # get branch IDs if child branches
 find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRUE) {
-
+  
   # get cylinders of the branches
   cyl_sub <- cylinder[cylinder$branch %in% branch_ID,]
-
+  
   # get all cylinders which are children of the branches
   cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id & !(cylinder$branch %in% branch_ID),]
-
+  
   # return the branch IDs of the children
   if (nrow(cyl_childs) == 0) {
     if (include_self) {
       return(branch_ID)
     } else {
-      return(self)
+      return(NULL)
     }
   } else {
     id_childs <- unique(cyl_childs$branch)
