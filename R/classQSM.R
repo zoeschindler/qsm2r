@@ -149,6 +149,7 @@ setMethod(
         closed = -2,
         sides = sides)
       cyl$material$color <- cylinder$color[i]
+      cyl$material$tag <- cylinder$cyl_id[i]
       cyl
     })
 
