@@ -154,6 +154,29 @@ find_childs_recursive_cylinder <- function(cylinder, cyl_IDs, include_self = TRU
 
 ################################################################################
 
+find_parents_recursive_cylinder  <- function(cylinder, cyl_IDs, include_self = TRUE) {
+  # get cylinders to start with
+  cyl_sub <- cylinder[cylinder$cyl_id %in% cyl_IDs,]
+  
+  # get all cylinders which are parents of the branches
+  cyl_parents <- cylinder[cylinder$cyl_id %in% cyl_sub$parent,]
+  
+  # return the cylinder IDs of the children
+  if (nrow(cyl_parents) == 0) {
+    return(NULL)
+  } else {
+    id_parents <- unique(cyl_parents$cyl_id)
+    id_parents_parents <- find_parents_recursive_cylinder(cylinder, id_parents)
+    if (include_self) {
+      return(c(cyl_IDs, id_parents, id_parents_parents))
+    } else {
+      return(c(id_parents, id_parents_parents))
+    }
+  }
+}
+
+################################################################################
+
 # turns lists read in from matlab into data frames
 # (assumes that all selected list entries are scalars of the same length)
 # (transforms each list entry to a data frame column)
