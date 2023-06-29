@@ -156,10 +156,13 @@ find_childs_recursive_cylinder <- function(cylinder, cyl_IDs, include_self = TRU
 
 find_parents_recursive_cylinder  <- function(cylinder, cyl_IDs, include_self = TRUE) {
   # get cylinders to start with
-  cyl_sub <- cylinder[cylinder$cyl_id %in% cyl_IDs,]
+  cyl_sub <- cylinder[cylinder$cyl_id == min(cyl_IDs),]
   
-  # get all cylinders which are parents of the branches
-  cyl_parents <- cylinder[cylinder$cyl_id %in% cyl_sub$parent,]
+  # get parent cylinder
+  cyl_parent <- cylinder[cylinder$cyl_id == cyl_sub$parent,]
+  
+  # get all cylinders below parent in same branch
+  cyl_parents <- cylinder[cylinder$branch == cyl_parent$branch & cylinder$PositionInBranch <= cyl_parent$PositionInBranch]
   
   # return the cylinder IDs of the children
   if (nrow(cyl_parents) == 0) {
