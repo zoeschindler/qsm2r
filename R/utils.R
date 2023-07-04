@@ -134,13 +134,17 @@ find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRU
 find_childs_recursive_cylinder <- function(cylinder, cyl_IDs, include_self = TRUE) {
   # get cylinders to start with
   cyl_sub <- cylinder[cylinder$cyl_id %in% cyl_IDs,]
-
+  
   # get all cylinders which are children of the branches
   cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id,]
-
+  
   # return the cylinder IDs of the children
   if (nrow(cyl_childs) == 0) {
-    return(NULL)
+    if (include_self) {
+      return(cyl_IDs)
+    } else{
+      return(NULL)
+    }
   } else {
     id_childs <- unique(cyl_childs$cyl_id)
     id_childs_childs <- find_childs_recursive_cylinder(cylinder, id_childs)
