@@ -67,7 +67,7 @@ setMethod(
 #' @param pal \code{function}, color palette used for coloring.
 #' @param sides \code{integer}, number of sides in the polygon cross section.
 #' @param lit \code{boolean}, whether the scene should be with or without light.
-#' @param center  \code{boolean}, whether all cylinders should be centered at
+#' @param center  \code{boolean}, whether the cylinders should be centered at
 #' the stem base.
 #'
 #' @return
@@ -94,7 +94,7 @@ setMethod(
   "plot",
   signature(x = "QSM", y = "missing"),
   function(x, y, col = NULL, col_var = "BranchOrder", pal = color_pal_qsm(),
-           sides = 6, lit = FALSE, center = TRUE) {
+           sides = 6, lit = FALSE, center = FALSE) {
 
     # extract relevant data
     qsm <- x
@@ -108,9 +108,12 @@ setMethod(
 
     # center cylinders
     if (center) {
-      cylinder$start_X = cylinder$start_X - cylinder$start_X[1]
-      cylinder$start_Y = cylinder$start_Y - cylinder$start_Y[1]
-      cylinder$start_Z = cylinder$start_Z - cylinder$start_Z[1]
+
+      # move stem base location
+      stem_base <- get_location(qsm)
+      cylinder$start_X = cylinder$start_X - stem_base[1]
+      cylinder$start_Y = cylinder$start_Y - stem_base[2]
+      cylinder$start_Z = cylinder$start_Z - stem_base[3]
     }
 
     # calculate end points of cylinders

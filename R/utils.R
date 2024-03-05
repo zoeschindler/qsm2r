@@ -31,7 +31,7 @@ deg2rad <- function(deg) {
 #' @param qsm An object of class \code{QSM}.
 #'
 #' @return
-#' A list containing the \code{xyz}-coordinates of the stem base.
+#' A named \code{numeric} containing the \code{xyz}-coordinates of the stem base.
 #'
 #' @seealso \code{\link{set_location}}
 #'
@@ -46,19 +46,16 @@ deg2rad <- function(deg) {
 get_location <- function(qsm) {
 
   # get starting coordinates of stem base
-  base_id <- qsm@cylinder$cyl_id[qsm@cylinder$BranchOrder == 0 & qsm@cylinder$PositionInBranch == 1]
-  location <- list(
+  base_id <- qsm@cylinder$cyl_id[qsm@cylinder$BranchOrder == 0 &
+                                 qsm@cylinder$PositionInBranch == 1 &
+                                 qsm@cylinder$branch == 1]
+  location <- c(
     "x" = qsm@cylinder$start_X[qsm@cylinder$cyl_id == base_id],
     "y" = qsm@cylinder$start_Y[qsm@cylinder$cyl_id == base_id],
     "z" = qsm@cylinder$start_Z[qsm@cylinder$cyl_id == base_id])
 
-  # show results
-  cat("x:", round(location[["x"]], 2), "\n")
-  cat("y:", round(location[["y"]], 2), "\n")
-  cat("z:", round(location[["z"]], 2), "\n")
-
   # return results
-  return(invisible(location))
+  return(location)
 }
 
 ################################################################################
@@ -70,8 +67,7 @@ get_location <- function(qsm) {
 #' is moved to the point \code{(0|0|0)}.
 #'
 #' @param qsm An object of class \code{QSM}.
-#' @param location Coordinates of a point which is supposed to be moved to
-#' \code{(0|0|0)}. A list or a data.frame with items or columns \code{xyz}.
+#' @param location \code{numeric}, \code{xyz}-coordinates of the new stem base.
 #'
 #' @return
 #' An object of class \code{QSM}.
@@ -83,18 +79,24 @@ get_location <- function(qsm) {
 #' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 #' qsm <- readQSM(file_path)
 #'
-#' # get stem base location
-#' stem_base <- get_location(qsm)
+#' # check old location
+#' get_location(qsm)
 #'
 #' # shift stem base to (0|0|0)
-#' qsm <- set_location(qsm, stem_base)
+#' qsm <- set_location(qsm, location = c(0,0,0))
+#'
+#' # check new location
+#' get_location(qsm)
 #' @export
-set_location <- function(qsm, location) {
+set_location <- function(qsm, location = c(0,0,0)) {
+
+  # get stem base location
+  stem_base <- get_location(qsm)
 
   # recenter cylinders from location to (0|0|0)
-  qsm@cylinder$start_X <- qsm@cylinder$start_X - location$x
-  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - location$y
-  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - location$z
+  qsm@cylinder$start_X <- qsm@cylinder$start_X - stem_base[1] + location[1]
+  qsm@cylinder$start_Y <- qsm@cylinder$start_Y - stem_base[2] + location[2]
+  qsm@cylinder$start_Z <- qsm@cylinder$start_Z - stem_base[3] + location[3]
 
   # return results
   return(qsm)
@@ -104,13 +106,13 @@ set_location <- function(qsm, location) {
 
 # get branch IDs if child branches
 find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRUE) {
-  
+
   # get cylinders of the branches
   cyl_sub <- cylinder[cylinder$branch %in% branch_ID,]
-  
+
   # get all cylinders which are children of the branches
   cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id & !(cylinder$branch %in% branch_ID),]
-  
+
   # return the branch IDs of the children
   if (nrow(cyl_childs) == 0) {
     if (include_self) {
@@ -134,10 +136,10 @@ find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRU
 find_childs_recursive_cylinder <- function(cylinder, cyl_IDs, include_self = TRUE) {
   # get cylinders to start with
   cyl_sub <- cylinder[cylinder$cyl_id %in% cyl_IDs,]
-  
+
   # get all cylinders which are children of the branches
   cyl_childs <- cylinder[cylinder$parent %in% cyl_sub$cyl_id,]
-  
+
   # return the cylinder IDs of the children
   if (nrow(cyl_childs) == 0) {
     if (include_self) {
@@ -161,13 +163,13 @@ find_childs_recursive_cylinder <- function(cylinder, cyl_IDs, include_self = TRU
 find_parents_recursive_cylinder  <- function(cylinder, cyl_IDs, include_self = TRUE) {
   # get cylinders to start with
   cyl_sub <- cylinder[cylinder$cyl_id == min(cyl_IDs),]
-  
+
   # get parent cylinder
   cyl_parent <- cylinder[cylinder$cyl_id == cyl_sub$parent,]
-  
+
   # get all cylinders below parent in same branch
   cyl_parents <- cylinder[cylinder$branch == cyl_parent$branch & cylinder$PositionInBranch <= cyl_parent$PositionInBranch]
-  
+
   # return the cylinder IDs of the children
   if (nrow(cyl_parents) == 0) {
     return(NULL)

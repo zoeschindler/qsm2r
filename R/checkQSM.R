@@ -10,7 +10,7 @@
 #' \code{QSM} object.
 #'
 #' @param qsm An object of class \code{QSM}.
-#' @param precision Number of decimal points to be compared.
+#' @param precision \code{integer}, number of decimal points to be compared.
 #'
 #' @return
 #' A logical. \code{TRUE} if the object is likely up-to-date, \code{FALSE} if
