@@ -9,7 +9,7 @@ checkQSM(qsm, precision = 2L)
 \arguments{
 \item{qsm}{An object of class \code{QSM}.}
 
-\item{precision}{Number of decimal points to be compared.}
+\item{precision}{\code{integer}, number of decimal points to be compared.}
 }
 \value{
 A logical. \code{TRUE} if the object is likely up-to-date, \code{FALSE} if

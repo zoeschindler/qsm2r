@@ -4,13 +4,12 @@
 \alias{set_location}
 \title{Set location of the stem base}
 \usage{
-set_location(qsm, location)
+set_location(qsm, location = c(0, 0, 0))
 }
 \arguments{
 \item{qsm}{An object of class \code{QSM}.}
 
-\item{location}{Coordinates of a point which is supposed to be moved to
-\code{(0|0|0)}. A list or a data.frame with items or columns \code{xyz}.}
+\item{location}{\code{numeric}, \code{xyz}-coordinates of the new stem base.}
 }
 \value{
 An object of class \code{QSM}.
@@ -24,11 +23,14 @@ is moved to the point \code{(0|0|0)}.
 file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
 qsm <- readQSM(file_path)
 
-# get stem base location
-stem_base <- get_location(qsm)
+# check old location
+get_location(qsm)
 
 # shift stem base to (0|0|0)
-qsm <- set_location(qsm, stem_base)
+qsm <- set_location(qsm, location = c(0,0,0))
+
+# check new location
+get_location(qsm)
 }
 \seealso{
 \code{\link{get_location}}

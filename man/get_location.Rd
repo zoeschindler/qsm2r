@@ -10,7 +10,7 @@ get_location(qsm)
 \item{qsm}{An object of class \code{QSM}.}
 }
 \value{
-A list containing the \code{xyz}-coordinates of the stem base.
+A named \code{numeric} containing the \code{xyz}-coordinates of the stem base.
 }
 \description{
 \code{get_location} obtains the location of the stem base.

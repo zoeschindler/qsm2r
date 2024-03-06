@@ -15,7 +15,7 @@ plot(x, y, ...)
   pal = color_pal_qsm(),
   sides = 6,
   lit = FALSE,
-  center = TRUE
+  center = FALSE
 )
 }
 \arguments{
@@ -36,7 +36,7 @@ be used for coloring.}
 
 \item{lit}{\code{boolean}, whether the scene should be with or without light.}
 
-\item{center}{\code{boolean}, whether all cylinders should be centered at
+\item{center}{\code{boolean}, whether the cylinders should be centered at
 the stem base.}
 }
 \value{
