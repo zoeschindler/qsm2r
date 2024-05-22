@@ -7,8 +7,8 @@ citEntry(
   year     = "2023",
   url      = "https://github.com/zoeschindler/qsm2r",
   textVersion = paste(
-    "Schindler, Z. (2022).",
+    "Schindler, Z. (2023).",
     "qsm2r: Import and analyze QSMs from TreeQSM in R.",
-    "URL:https://github.com/zoeschindler/qsm2r"
+    "URL: https://github.com/zoeschindler/qsm2r"
   )
 )
