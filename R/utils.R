@@ -104,6 +104,61 @@ set_location <- function(qsm, location = c(0,0,0)) {
 
 ################################################################################
 
+#' Get conductive paths of branch tips
+#'
+#' @description
+#' \code{conductive_paths} identifies all branch tips and calculates the total
+#' length and nodes between branch tips and stem base.
+#'
+#' @param qsm An object of class \code{QSM}.
+#'
+#' @return
+#' A \code{data.frame} containing the conductive path lengths and nodes
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # get conductive paths
+#' conductive_paths(qsm)
+#' @export
+conductive_paths <- function(qsm) {
+
+  # subset data
+  cyl <- qsm@cylinder
+
+  # remove floating cylinders
+  cyl <- cyl[!(cyl$parent == 0 & cyl$branch != 1),]
+
+  # get branch tips
+  tip <- cyl[cyl$extension == 0,]
+
+  # prepare storage
+  paths <- c()
+
+  # loop through tips
+  for (idx in 1:nrow(tip)) {
+
+    # get all parents
+    path_ids <- unique(find_parents_recursive_cylinder(cyl, tip$cyl_id[idx], include_self = TRUE))
+    parents <- cyl[cyl$cyl_id %in% path_ids,]
+
+    # save results
+    curr <- data.frame(
+      "cyl_id" = tip$cyl_id[idx],
+      "branch" = tip$branch[idx],
+      "length_m" = sum(parents$length),
+      "nodes_taken" = length(unique(parents$branch)) - 1)
+    paths <- rbind(paths, curr)
+  }
+
+  # return result
+  return(paths)
+}
+
+################################################################################
+
 # get branch IDs if child branches
 find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRUE) {
 
