@@ -108,12 +108,13 @@ set_location <- function(qsm, location = c(0,0,0)) {
 #'
 #' @description
 #' \code{conductive_paths} identifies all branch tips and calculates the total
-#' length and nodes between branch tips and stem base.
+#' length, the length segments, the total number of nodes and the nodes taken
+#' of all cylinders between branch tips and stem base.
 #'
 #' @param qsm An object of class \code{QSM}.
 #'
 #' @return
-#' A \code{data.frame} containing the conductive path lengths and nodes
+#' A \code{list} containing the conductive path lengths and nodes.
 #'
 #' @examples
 #' # load qsm
@@ -134,24 +135,41 @@ conductive_paths <- function(qsm) {
   # get branch tips
   tip <- cyl[cyl$extension == 0,]
 
-  # prepare storage
-  paths <- c()
-
   # loop through tips
-  for (idx in 1:nrow(tip)) {
+  paths <- lapply(1:nrow(tip), function(idx) {
 
     # get all parents
-    path_ids <- unique(find_parents_recursive_cylinder(cyl, tip$cyl_id[idx], include_self = TRUE))
+    path_ids <- sort(unique(find_parents_recursive_cylinder(cyl, tip$cyl_id[idx], include_self = TRUE)))
     parents <- cyl[cyl$cyl_id %in% path_ids,]
 
+    # loop through cylinders
+    segments <- c()
+    curr_segment <- 0
+    for (id in path_ids) {
+
+      # add cylinder length to segment length
+      curr_segment <- curr_segment + cyl$length[cyl$cyl_id == id]
+
+      # get children of the cylinder
+      childs <- find_childs_cylinder(cyl, id)
+
+      # if parent to foreign children -> start new segment
+      if (length(childs$foreign) > 0) {
+        segments <- c(segments, curr_segment)
+        curr_segment <- 0
+      }
+    }
+    segments <- c(segments, curr_segment)
+
     # save results
-    curr <- data.frame(
-      "cyl_id" = tip$cyl_id[idx],
-      "branch" = tip$branch[idx],
-      "length_m" = sum(parents$length),
-      "nodes_taken" = length(unique(parents$branch)) - 1)
-    paths <- rbind(paths, curr)
-  }
+    return(list(
+      "tip_id" = tip$cyl_id[idx],
+      "branch_id" = tip$branch[idx],
+      "length_total" = sum(parents$length),
+      "length_segments" = segments,
+      "nodes_total" = length(segments) - 1,
+      "nodes_taken" = length(unique(parents$branch)) - 1))
+  })
 
   # return result
   return(paths)
@@ -184,6 +202,28 @@ find_childs_recursive_branch <- function(cylinder, branch_ID, include_self = TRU
       return(c(id_childs, id_childs_childs))
     }
   }
+}
+
+################################################################################
+
+find_childs_cylinder <- function(cylinder, cyl_ID) {
+  # get all cylinders which are children of the cylinder
+  childs <- cylinder[cylinder$parent == cyl_ID,]
+
+  # check if there are children
+  if (nrow(childs) > 0) {
+
+    # separate own and foreign children
+    branch <- cylinder$branch[cylinder$cyl_id == cyl_ID]
+    own <- childs$cyl_id[childs$branch == branch]
+    foreign <- childs$cyl_id[childs$branch != branch]
+
+  } else { # set children ids to empty
+    own <- foreign <- integer()
+  }
+
+  # return the cylinder IDs of the children
+  return(list("own" = own, "foreign" = foreign))
 }
 
 ################################################################################
