@@ -44,7 +44,7 @@ qsm <- updateQSM(qsm)
 # check if branch & overview are up-to-date with cylinder
 checkQSM(qsm)
 
-# get summary
+# get qsm summary
 print(qsm)
 ```
 
