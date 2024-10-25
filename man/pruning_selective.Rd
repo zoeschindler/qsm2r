@@ -51,5 +51,6 @@ pruning on growth and secondary shoot development of wild cherry
 doi: \href{https://doi.org/10.1016/j.foreco.2010.12.007}{10.1016/j.foreco.2010.12.007}
 }
 \seealso{
-\code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}}
+\code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}},
+\code{\link{pruning_tips}}
 }

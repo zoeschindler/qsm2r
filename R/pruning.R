@@ -145,7 +145,8 @@ pruning_branches <- function(qsm, branch_id, remove = FALSE) {
 #' @return
 #' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
-#' @seealso \code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}}
+#' @seealso \code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}},
+#' \code{\link{pruning_tips}}
 #'
 #' @examples
 #' # load qsm
@@ -226,7 +227,8 @@ pruning_conventional <- function(qsm, threshold_m = 3, method = c("length", "hei
 #' @return
 #' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
-#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}}
+#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_whorlwise}},
+#' \code{\link{pruning_tips}}
 #'
 #' @examples
 #' # load qsm
@@ -292,7 +294,8 @@ pruning_selective <- function(qsm, diameter_m = 0.03, angle_deg = 40, remove = F
 #' @return
 #' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
 #'
-#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_selective}}
+#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_selective}},
+#' \code{\link{pruning_tips}}
 #'
 #' @examples
 #' # load qsm
@@ -353,7 +356,129 @@ pruning_whorlwise <- function(qsm, whorl_m = 0.3, remaining_whorls = 5, remove =
     }
   }
 
-  # return old / modified qsm
+  # return modified qsm
+  return(qsm)
+}
+
+################################################################################
+
+#' Pruning of tips at specified diameter
+#'
+#' @description
+#' \code{pruning_tips} prunes the tips of all branches below a specified branch
+#' diameter. A minimum length and/or number of consecutive cylinders falling
+#' below the specified branch diameter can be specified. If a tip is reached
+#' before the length and number threshold can be met, the cylinders are removed
+#' regardless of these parameters.
+#'
+#' @param qsm An object of class \code{QSM}.
+#' @param diameter_m \code{numeric}, branch diameter in meters below which
+#' branch tips should be pruned.
+#' @param length_m \code{numeric}, minimum length of consecutive cylinders below
+#' the diameter threshold.
+#' @param num_childs \code{integer}, minimum number of consecutive cylinders
+#' below the diameter threshold.
+#' @param remove \code{boolean}, whether the to be pruned cylinders should be
+#' removed (\code{TRUE}) or labelled (\code{FALSE}).
+#'
+#' @return
+#' \code{QSM}, with removed or labelled cylinders (column \code{cylinder$prune}).
+#'
+#' @seealso \code{\link{pruning_conventional}}, \code{\link{pruning_selective}},
+#' \code{\link{pruning_whorlwise}}
+#'
+#' @examples
+#' # load qsm
+#' file_path <- system.file("extdata", "QSM_Juglans_regia_M.mat", package="qsm2r")
+#' qsm <- readQSM(file_path)
+#'
+#' # prune at 5cm branch diameter, without removing
+#' not_removed <- pruning_tips(qsm, diameter_m = 0.05, remove = FALSE)
+#'
+#' # plot qsm
+#' plot(not_removed, col_var = "prune")
+#'
+#' # prune at 5cm branch diameter, with removing
+#' removed <- pruning_tips(qsm, diameter_m = 0.05, remove = TRUE)
+#'
+#' # plot qsm
+#' plot(removed)
+#' @export
+pruning_tips <- function(qsm, diameter_m = 0.07, length_m = 0, num_childs = 0, remove = FALSE) {
+
+  # prepare data
+  cylinder <- qsm@cylinder
+  cylinder <- cylinder[cylinder$parent > 0 | cylinder$cyl_id == 1,]
+
+  # get all cylinders with diameter <= diameter_m
+  cylinder_thin <- cylinder[cylinder$radius*2 <= diameter_m,]
+
+  # for each branch with a too thin cylinder, get those too thin cylinders,
+  # whose parents were not already too small (i.e. get the possible locations,
+  # where the qsm would be pruned)
+  cylinder_thin_clean <- c()
+  for (curr_branch in unique(cylinder_thin$branch)) {
+    cylinder_thin_sub <- cylinder_thin[cylinder_thin$branch == curr_branch,]
+    cylinder_thin_sub <- cylinder_thin_sub[!(cylinder_thin_sub$parent %in% cylinder_thin_sub$cyl_id),]
+    cylinder_thin_clean <- rbind(cylinder_thin_clean, cylinder_thin_sub)
+  }
+
+  # loop through potential cutoffs
+  cyl_id <- c()
+  for (curr_id in unique(cylinder_thin_clean$cyl_id)) {
+    id_parent <- curr_id
+    segment_len <- cylinder_thin_clean$length[cylinder_thin_clean$cyl_id == curr_id]
+
+    # loop through child cylinders until the specified length and number of
+    # consecutive thin cylinders is reached
+    num_childs_curr <- 0
+    num_reached <- num_childs_curr >= num_childs
+    len_reached <- segment_len >= length_m
+    tip_reached <- FALSE
+    while (!(len_reached & num_reached)) {
+
+      # get child of the lowest branch order
+      childs <- cylinder[cylinder$parent == id_parent,]
+      child <- childs[which.min(childs$BranchOrder),]
+
+      # check if the tip is reached
+      if (nrow(childs) == 0) {
+        tip_reached <- TRUE
+        break
+      }
+
+      # check if the child meets diameter criterion
+      if (child$radius*2 > diameter_m) {
+        break
+      }
+
+      # update current number of children
+      num_childs_curr <- num_childs_curr + 1
+      num_reached <- num_childs_curr >= num_childs
+
+      # add length to segment length
+      segment_len <- segment_len + child$length
+      len_reached <- segment_len >= length_m
+
+      # switch to next id
+      id_parent <- child$cyl_id
+    }
+
+    # check if cylinder should be added to result
+    # either: minimum number and length of consecutive thin cylinders are too small
+    # or: branch tip was reached with too thin cylinders
+    if ((len_reached & num_reached) | tip_reached) {
+      cyl_id <- c(cyl_id, curr_id)
+    }
+  }
+
+  # add children of cut-off points
+  cyl_id <- unique(find_childs_recursive_cylinder(cylinder, cyl_id, include_self = TRUE))
+
+  # remove branches
+  qsm <- pruning_cylinders(qsm, cyl_id = cyl_id, remove = remove)
+
+  # return modified qsm
   return(qsm)
 }
 

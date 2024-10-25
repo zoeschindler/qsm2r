@@ -114,7 +114,7 @@ set_location <- function(qsm, location = c(0,0,0)) {
 #' @param qsm An object of class \code{QSM}.
 #'
 #' @return
-#' A \code{list} containing the conductive path lengths and nodes.
+#' A \code{data.frm} containing the conductive path lengths and nodes.
 #'
 #' @examples
 #' # load qsm
@@ -162,11 +162,11 @@ conductive_paths <- function(qsm) {
     segments <- c(segments, curr_segment)
 
     # save results
-    return(list(
+    return(data.frame(
       "tip_id" = tip$cyl_id[idx],
       "branch_id" = tip$branch[idx],
       "length_total" = sum(parents$length),
-      "length_segments" = segments,
+      "length_segment" = segments,
       "nodes_total" = length(segments) - 1,
       "nodes_taken" = length(unique(parents$branch)) - 1))
   })

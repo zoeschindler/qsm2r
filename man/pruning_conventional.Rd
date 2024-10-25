@@ -48,5 +48,6 @@ removed <- pruning_conventional(qsm, threshold_m = 3, method = "length", remove 
 plot(removed)
 }
 \seealso{
-\code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}}
+\code{\link{pruning_selective}}, \code{\link{pruning_whorlwise}},
+\code{\link{pruning_tips}}
 }
