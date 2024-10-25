@@ -10,7 +10,7 @@ conductive_paths(qsm)
 \item{qsm}{An object of class \code{QSM}.}
 }
 \value{
-A \code{data.frm} containing the conductive path lengths and nodes.
+A \code{data.frame} containing the conductive path lengths and nodes.
 }
 \description{
 \code{conductive_paths} identifies all branch tips and calculates the total

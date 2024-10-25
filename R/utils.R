@@ -114,7 +114,7 @@ set_location <- function(qsm, location = c(0,0,0)) {
 #' @param qsm An object of class \code{QSM}.
 #'
 #' @return
-#' A \code{data.frm} containing the conductive path lengths and nodes.
+#' A \code{data.frame} containing the conductive path lengths and nodes.
 #'
 #' @examples
 #' # load qsm
