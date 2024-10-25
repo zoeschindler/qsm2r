@@ -162,14 +162,18 @@ conductive_paths <- function(qsm) {
     segments <- c(segments, curr_segment)
 
     # save results
-    return(data.frame(
+    return(c(
       "tip_id" = tip$cyl_id[idx],
       "branch_id" = tip$branch[idx],
       "length_total" = sum(parents$length),
-      "length_segment" = segments,
+      "length_segment_min" = min(segments),
+      "length_segment_max" = max(segments),
+      "length_segment_mean" = mean(segments),
+      "length_segment_median" = median(segments),
       "nodes_total" = length(segments) - 1,
       "nodes_taken" = length(unique(parents$branch)) - 1))
   })
+  paths <- as.data.frame(do.call(rbind, paths))
 
   # return result
   return(paths)
