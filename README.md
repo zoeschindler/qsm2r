@@ -1,6 +1,6 @@
 # qsm2r: Import and analyze QSMs from TreeQSM in R 
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14871356.svg)](https://doi.org/10.5281/zenodo.14871356)
+<a href="https://doi.org/10.5281/zenodo.14871356"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.14871356.svg" alt="DOI"></a>
 
 ## Description <img src="https://github.com/zoeschindler/qsm2r/blob/main/inst/figures/logo.png" align="right" width = 290/>
 
