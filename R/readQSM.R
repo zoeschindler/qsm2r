@@ -123,10 +123,7 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
     # return results
     return(qsm)
 
-  } else if (is(file_path, "character") & endsWith(file_path, ".txt")) { # raycloudtool
-
-    # testing
-    file_path = "C:/Users/Schindler/Downloads/test_big.txt"
+  } else if (is(file_path, "character") & endsWith(file_path, ".txt")) { # rayextract trees
 
     # read data
     txt_dat <- read.delim(file_path, skip = 2, header = FALSE)[,1]
