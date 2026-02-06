@@ -356,6 +356,22 @@ random_orth_norm <- function(x, y, z) {
   orth_y <- rnorm(length(y))
   orth_z <- (-x * orth_x - y * orth_y) / z
 
+  # get those where z was 0
+  ids <- which(z == 0)
+  if (length(ids) > 0) {
+    orth_x[ids] <- rnorm(length(ids))
+    orth_z[ids] <- rnorm(length(ids))
+    orth_y[ids] <- (-x[ids] * orth_x[ids] - z[ids] * orth_z[ids]) / y[ids]
+  }
+
+  # get those where y was 0
+  ids <- which(y == 0 & z == 0)
+  if (length(ids) > 0) {
+    orth_y[ids] <- rnorm(length(ids))
+    orth_z[ids] <- rnorm(length(ids))
+    orth_x[ids] <- (-z[ids] * orth_z[ids] - y[ids] * orth_y[ids]) / x[ids]
+  }
+
   # normalize vector
   orth_len <- sqrt(orth_x**2 + orth_y**2 + orth_z**2) # 3D length
   orth_x <- orth_x / orth_len
