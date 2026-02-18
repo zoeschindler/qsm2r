@@ -44,6 +44,89 @@ updateQSM_basics <- function(qsm) {
 
 ################################################################################
 
+updateQSM_branch <- function(qsm) {
+
+  # prepare storage
+  branch <- data.table::data.table()
+
+  # create subsets
+  radius <- data.table::data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "radius" = qsm@cylinder$radius)
+  length <- data.table::data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "length" = qsm@cylinder$length)
+  axis <- data.table::data.table(
+    "cyl_id" = qsm@cylinder$cyl_id,
+    "axis_X" = qsm@cylinder$axis_X,
+    "axis_Y" = qsm@cylinder$axis_Y,
+    "axis_Z" = qsm@cylinder$axis_Z)
+
+  # loop through branches
+  for (branch_id in unique(qsm@cylinder$branch)) {
+
+    # get indices of current branch rows
+    sub_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id]
+    first_cyl <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
+
+    # derive basic stats
+    branch_order <- qsm@cylinder$BranchOrder[qsm@cylinder$cyl_id == first_cyl]
+    branch_diameter <-  2 * radius$radius[radius$cyl_id == first_cyl]
+    branch_volume <- sum(1000 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx] ** 2)
+    branch_area <- sum(2 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx])
+    branch_length <- sum(length$length[length$cyl_id %in% sub_idx])
+    branch_height <- qsm@cylinder$start_Z[first_cyl] - qsm@cylinder$start_Z[1]
+
+    # if first cylinder was added, use second cylinder to compute angle
+    if (qsm@cylinder$added[qsm@cylinder$cyl_id == first_cyl] == 1 & length(sub_idx) > 1) {
+      first_considered <- sub_idx[2]
+    } else {
+      first_considered <- first_cyl
+    }
+    parent_cyl <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl]
+    branch_angle <- ifelse(parent_cyl > 0, 180 / pi *
+                             acos(as.numeric(axis[axis$cyl_id == first_considered,2:4]) %*%
+                                    as.numeric(axis[axis$cyl_id == parent_cyl,2:4])), 0)
+
+    # derive branch azimuth and zenith
+    branch_azimuth <- 180 / pi * atan2(axis$axis_Y[axis$cyl_id == first_cyl], axis$axis_X[axis$cyl_id == first_cyl])
+    branch_zenith <- 180 / pi * acos(axis$axis_Z[axis$cyl_id == first_cyl])
+
+    # get parent cylinder
+    first_cyl_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
+    parent_cyl_idx <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl_idx]
+    if (parent_cyl_idx > 0) {
+      branch_parent <- qsm@cylinder$branch[qsm@cylinder$cyl_id == parent_cyl_idx]
+    } else {
+      branch_parent <- 0
+    }
+
+    # append branch data
+    branch_curr <- data.table::data.table(
+      "bra_id" = branch_id,
+      "order" = as.integer(branch_order),
+      "parent" = as.integer(branch_parent),
+      "diameter" = branch_diameter,
+      "volume" = branch_volume,
+      "area" = branch_area,
+      "length" = branch_length,
+      "angle" = branch_angle,
+      "height" = branch_height,
+      "azimuth" = branch_azimuth,
+      "zenith" = branch_zenith
+    )
+    branch <- rbind(branch, branch_curr)
+  }
+
+  # overwrite old data
+  qsm@branch <- branch
+
+  # return results
+  return(qsm)
+}
+
+################################################################################
+
 updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
   # requires up-to-date branch and basic overview data
@@ -128,7 +211,7 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
       "Z" = cylinder$start_Z + cylinder$length * cylinder$axis_Z))
 
   # delete duplicates
-  points <- unique(round(points, 6))
+  points <- unique(round(points, 4))
 
   ### PART 2: vertical profiles
 
@@ -199,7 +282,7 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
   # derive points of alpha shape
   alpha_value <- max(0.5, avg_crown_width/10)
-  alpha_points <- unique(points[,c("X","Y")])
+  alpha_points <- unique(round(points[,c("X","Y")],4))
   alpha_shape <- alphahull::ashape(x = alpha_points$X, y = alpha_points$Y, alpha = alpha_value) # takes ages
   alpha_idx <- c(alpha_shape$alpha.extremes, alpha_shape$alpha.extremes[1]) # points are unordered
 
@@ -311,89 +394,6 @@ updateQSM_crown <- function(qsm, method = "TreeQSM") {
 
   # overwrite old data
   qsm@overview <- overview
-
-  # return results
-  return(qsm)
-}
-
-################################################################################
-
-updateQSM_branch <- function(qsm) {
-
-  # prepare storage
-  branch <- data.table::data.table()
-
-  # create subsets
-  radius <- data.table::data.table(
-    "cyl_id" = qsm@cylinder$cyl_id,
-    "radius" = qsm@cylinder$radius)
-  length <- data.table::data.table(
-    "cyl_id" = qsm@cylinder$cyl_id,
-    "length" = qsm@cylinder$length)
-  axis <- data.table(
-    "cyl_id" = qsm@cylinder$cyl_id,
-    "axis_X" = qsm@cylinder$axis_X,
-    "axis_Y" = qsm@cylinder$axis_Y,
-    "axis_Z" = qsm@cylinder$axis_Z)
-
-  # loop through branches
-  for (branch_id in unique(qsm@cylinder$branch)) {
-
-    # get indices of current branch rows
-    sub_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id]
-    first_cyl <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
-
-    # derive basic stats
-    branch_order <- qsm@cylinder$BranchOrder[qsm@cylinder$cyl_id == first_cyl]
-    branch_diameter <-  2 * radius$radius[radius$cyl_id == first_cyl]
-    branch_volume <- sum(1000 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx] ** 2)
-    branch_area <- sum(2 * pi * length$length[length$cyl_id %in% sub_idx] * radius$radius[radius$cyl_id %in% sub_idx])
-    branch_length <- sum(length$length[length$cyl_id %in% sub_idx])
-    branch_height <- qsm@cylinder$start_Z[first_cyl] - qsm@cylinder$start_Z[1]
-
-    # if first cylinder was added, use second cylinder to compute angle
-    if (qsm@cylinder$added[qsm@cylinder$cyl_id == first_cyl] == 1 & length(sub_idx) > 1) {
-      first_considered <- sub_idx[2]
-    } else {
-      first_considered <- first_cyl
-    }
-    parent_cyl <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl]
-    branch_angle <- ifelse(parent_cyl > 0, 180 / pi *
-                             acos(as.numeric(axis[axis$cyl_id == first_considered,2:4]) %*%
-                                    as.numeric(axis[axis$cyl_id == parent_cyl,2:4])), 0)
-
-    # derive branch azimuth and zenith
-    branch_azimuth <- 180 / pi * atan2(axis$axis_Y[axis$cyl_id == first_cyl], axis$axis_X[axis$cyl_id == first_cyl])
-    branch_zenith <- 180 / pi * acos(axis$axis_Z[axis$cyl_id == first_cyl])
-
-    # get parent cylinder
-    first_cyl_idx <- qsm@cylinder$cyl_id[qsm@cylinder$branch == branch_id & qsm@cylinder$PositionInBranch == 1]
-    parent_cyl_idx <- qsm@cylinder$parent[qsm@cylinder$cyl_id == first_cyl_idx]
-    if (parent_cyl_idx > 0) {
-      branch_parent <- qsm@cylinder$branch[qsm@cylinder$cyl_id == parent_cyl_idx]
-    } else {
-      branch_parent <- 0
-    }
-
-    # append branch data
-    branch_curr <- data.table(
-      "bra_id" = branch_id,
-      "order" = as.integer(branch_order),
-      "parent" = as.integer(branch_parent),
-      "diameter" = branch_diameter,
-      "volume" = branch_volume,
-      "area" = branch_area,
-      "length" = branch_length,
-      "angle" = branch_angle,
-      "height" = branch_height,
-      "azimuth" = branch_azimuth,
-      "zenith" = branch_zenith
-    )
-    branch <- rbind(branch, branch_curr)
-  }
-
-  # overwrite old data
-  qsm@branch <- branch
 
   # return results
   return(qsm)

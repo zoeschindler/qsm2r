@@ -38,7 +38,7 @@ setMethod(
   function(object) {
     cat("class:       ", class(object), "\n")
     cat("name:        ", object@name, "\n")
-    cat("DBH:         ", round(object@overview$DBHcyl * 100), "cm\n")
+    cat("DBH:         ", round(object@overview$DBHqsm * 100), "cm\n")
     cat("height:      ", round(object@overview$TreeHeight, 2), "m\n")
     cat("cylinder     ", "\n")
     cat(" - count:    ", nrow(object@cylinder), "\n")

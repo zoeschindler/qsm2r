@@ -19,5 +19,5 @@ Imports:
 	alphashape3d,
 	cxhull
 URL: https://github.com/zoeschindler/qsm2r
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 TreeQSMNote: 2.4.1

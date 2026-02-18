@@ -7,20 +7,23 @@
 readQSM(file_path, qsm_var = 1, qsm_idx = 1)
 }
 \arguments{
-\item{file_path}{Path to the \code{*.mat} file.}
+\item{file_path}{Path to the \code{*.mat} TreeQSM file or to the
+\code{*.txt} racloudtools QSM file.}
 
 \item{qsm_var}{Name of the variable in the file in which the QSM is stored.
-Uses per default the first variable in the file.}
+Uses per default the first variable in the file. TreeQSM only.}
 
 \item{qsm_idx}{Index of the QSM in the variable is stored in.
-Uses per default the first QSM in the variable.}
+Uses per default the first QSM in the variable. TreeQSM only.}
 }
 \value{
 A new object of class \code{QSM}.
 }
 \description{
 \code{readQSM} reads in one QSM from a \code{*.mat} file created with
-\href{https://github.com/InverseTampere/TreeQSM}{TreeQSM} in Matlab.
+\href{https://github.com/InverseTampere/TreeQSM}{TreeQSM} or one QSM from a
+\code{*.txt} file created with
+\href{https://github.com/csiro-robotics/raycloudtools}{raycloudtools}.
 }
 \examples{
 # load qsm

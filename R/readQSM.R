@@ -6,13 +6,16 @@
 #'
 #' @description
 #' \code{readQSM} reads in one QSM from a \code{*.mat} file created with
-#' \href{https://github.com/InverseTampere/TreeQSM}{TreeQSM} in Matlab.
+#' \href{https://github.com/InverseTampere/TreeQSM}{TreeQSM} or one QSM from a
+#' \code{*.txt} file created with
+#' \href{https://github.com/csiro-robotics/raycloudtools}{raycloudtools}.
 #'
-#' @param file_path Path to the \code{*.mat} file.
+#' @param file_path Path to the \code{*.mat} TreeQSM file or to the
+#' \code{*.txt} racloudtools QSM file.
 #' @param qsm_var Name of the variable in the file in which the QSM is stored.
-#' Uses per default the first variable in the file.
+#' Uses per default the first variable in the file. TreeQSM only.
 #' @param qsm_idx  Index of the QSM in the variable is stored in.
-#' Uses per default the first QSM in the variable.
+#' Uses per default the first QSM in the variable. TreeQSM only.
 #'
 #' @return
 #' A new object of class \code{QSM}.
@@ -131,8 +134,18 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
 
     # convert format
     class(txt_dat) <- "numeric"
-    txt_dat <- data.frame(txt_dat)
+    txt_dat <- data.frame(txt_dat[,1:6])
     names(txt_dat) <- c("x","y","z","radius","parent_id","section_id")
+
+    # get offset
+    min_x <- min(txt_dat$x, na.rm = TRUE)
+    min_y <- min(txt_dat$y, na.rm = TRUE)
+    min_z <- min(txt_dat$z, na.rm = TRUE)
+
+    # remove offset
+    txt_dat$x <- txt_dat$x - min_x
+    txt_dat$y <- txt_dat$y - min_y
+    txt_dat$z <- txt_dat$z - min_z
 
     # fix naming starting with 0
     txt_dat$parent_id <- txt_dat$parent_id + 1
@@ -213,9 +226,6 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
       "axis_X" = axis_X,
       "axis_Y" = axis_Y,
       "axis_Z" = axis_Z,
-      "end_X" = end_X,
-      "end_Y" = end_Y,
-      "end_Z" = end_Z,
       "parent" = topology$parent,
       "branch" = topology$branch,
       "BranchOrder" = topology$BranchOrder,
@@ -240,6 +250,15 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
 
     # fill missing data
     qsm <- qsm2r::updateQSM(qsm)
+
+    # move back
+    qsm@cylinder$start_X <- qsm@cylinder$start_X + min_x
+    qsm@cylinder$start_y <- qsm@cylinder$start_Y + min_y
+    qsm@cylinder$start_z <- qsm@cylinder$start_Z + min_z
+
+    # return qsm
+    return(qsm)
+
   } else {
     stop("input must be from class 'character'")
   }
