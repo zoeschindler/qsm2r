@@ -14,8 +14,9 @@
 #' \code{*.txt} racloudtools QSM file.
 #' @param qsm_var Name of the variable in the file in which the QSM is stored.
 #' Uses per default the first variable in the file. TreeQSM only.
-#' @param qsm_idx  Index of the QSM in the variable is stored in.
+#' @param qsm_idx Index of the QSM in the variable is stored in.
 #' Uses per default the first QSM in the variable. TreeQSM only.
+#' @param update \code{boolean}, whether the qsm should be fully updated.
 #'
 #' @return
 #' A new object of class \code{QSM}.
@@ -31,7 +32,7 @@
 #' @import data.table
 #' @import R.matlab
 #' @export
-readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
+readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1, update = FALSE) {
 
   # data_in: path to a matlab file containing the qsm or the read in matlab file
   # qsm_var: name of the qsm in the matlab file (if there are multiple objects)
@@ -123,9 +124,6 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
       pmdistance = pmdist
     )
 
-    # return results
-    return(qsm)
-
   } else if (is(file_path, "character") & endsWith(file_path, ".txt")) { # rayextract trees
 
     # read data
@@ -136,16 +134,6 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
     class(txt_dat) <- "numeric"
     txt_dat <- data.frame(txt_dat[,1:6])
     names(txt_dat) <- c("x","y","z","radius","parent_id","section_id")
-
-    # get offset
-    min_x <- min(txt_dat$x, na.rm = TRUE)
-    min_y <- min(txt_dat$y, na.rm = TRUE)
-    min_z <- min(txt_dat$z, na.rm = TRUE)
-
-    # remove offset
-    txt_dat$x <- txt_dat$x - min_x
-    txt_dat$y <- txt_dat$y - min_y
-    txt_dat$z <- txt_dat$z - min_z
 
     # fix naming starting with 0
     txt_dat$parent_id <- txt_dat$parent_id + 1
@@ -247,23 +235,37 @@ readQSM <- function(file_path, qsm_var = 1, qsm_idx = 1) {
       rundata = list(),
       pmdistance = list()
     )
-
-    # fill missing data
-    qsm <- qsm2r::updateQSM(qsm)
-
-    # move back
-    qsm@cylinder$start_X <- qsm@cylinder$start_X + min_x
-    qsm@cylinder$start_y <- qsm@cylinder$start_Y + min_y
-    qsm@cylinder$start_z <- qsm@cylinder$start_Z + min_z
-
-    # return qsm
-    return(qsm)
-
   } else {
     stop("input must be from class 'character'")
   }
 
+  # update qsm
+  if (update) {
 
+    # get offset
+    min_x <- min(qsm@cylinder$start_X, na.rm = TRUE)
+    min_y <- min(qsm@cylinder$start_Y, na.rm = TRUE)
+    min_z <- min(qsm@cylinder$start_Z, na.rm = TRUE)
+
+    # move
+    qsm@cylinder$start_X <- qsm@cylinder$start_X - min_x
+    qsm@cylinder$start_Y <- qsm@cylinder$start_Y - min_y
+    qsm@cylinder$start_Z <- qsm@cylinder$start_Z - min_z
+
+    # update
+    qsm <- updateQSM(qsm)
+
+    # move back
+    qsm@cylinder$start_X <- qsm@cylinder$start_X + min_x
+    qsm@cylinder$start_Y <- qsm@cylinder$start_Y + min_y
+    qsm@cylinder$start_Z <- qsm@cylinder$start_Z + min_z
+
+  } else {
+    qsm <- updateQSM_basics(qsm)
+  }
+
+  # return qsm
+  return(qsm)
 }
 
 ################################################################################

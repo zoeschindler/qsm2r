@@ -4,7 +4,7 @@
 \alias{readQSM}
 \title{Read QSM from Matlab file}
 \usage{
-readQSM(file_path, qsm_var = 1, qsm_idx = 1)
+readQSM(file_path, qsm_var = 1, qsm_idx = 1, update = FALSE)
 }
 \arguments{
 \item{file_path}{Path to the \code{*.mat} TreeQSM file or to the
@@ -15,6 +15,8 @@ Uses per default the first variable in the file. TreeQSM only.}
 
 \item{qsm_idx}{Index of the QSM in the variable is stored in.
 Uses per default the first QSM in the variable. TreeQSM only.}
+
+\item{update}{\code{boolean}, whether the qsm should be fully updated.}
 }
 \value{
 A new object of class \code{QSM}.
